@@ -11,16 +11,52 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if essential Firebase config values are present
-if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-  console.error(
-    'Firebase configuration error: API Key, Auth Domain, or Project ID is missing. ' +
-    'Please ensure all NEXT_PUBLIC_FIREBASE_ environment variables are set correctly in your .env.local file ' +
-    'and that you have restarted your development server.'
-  );
-  if (!firebaseConfig.apiKey) console.error("NEXT_PUBLIC_FIREBASE_API_KEY is missing or empty.");
-  if (!firebaseConfig.authDomain) console.error("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is missing or empty.");
-  if (!firebaseConfig.projectId) console.error("NEXT_PUBLIC_FIREBASE_PROJECT_ID is missing or empty.");
+const placeholderValues = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+let configError = false;
+
+if (firebaseConfig.apiKey === placeholderValues.apiKey) {
+  console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_API_KEY is still set to the placeholder 'YOUR_API_KEY'. Please update it in your .env.local file with your actual Firebase API Key and restart your development server.");
+  configError = true;
+}
+if (firebaseConfig.authDomain === placeholderValues.authDomain) {
+  console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is still set to the placeholder 'YOUR_AUTH_DOMAIN'. Please update it in your .env.local file and restart your server.");
+  configError = true;
+}
+if (firebaseConfig.projectId === placeholderValues.projectId) {
+  console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_PROJECT_ID is still set to the placeholder 'YOUR_PROJECT_ID'. Please update it in your .env.local file and restart your server.");
+  configError = true;
+}
+// You can add similar checks for other optional placeholder values if needed.
+
+// Check for missing essential values if no placeholder error was detected for them specifically
+if (!configError) {
+  if (!firebaseConfig.apiKey) {
+    console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_API_KEY is missing or empty. Please set it in your .env.local file and restart your server.");
+    configError = true;
+  }
+  if (!firebaseConfig.authDomain) {
+    console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is missing or empty. Please set it in your .env.local file and restart your server.");
+    configError = true;
+  }
+  if (!firebaseConfig.projectId) {
+    console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_PROJECT_ID is missing or empty. Please set it in your .env.local file and restart your server.");
+    configError = true;
+  }
+}
+
+if (configError) {
+  console.error("---");
+  console.error("IMPORTANT: If you've just updated your .env.local file, you MUST RESTART your Next.js development server for the changes to take effect.");
+  console.error("Firebase initialization might fail due to the configuration issues listed above.");
+  console.error("---");
 }
 
 
@@ -41,7 +77,6 @@ export const signInWithGoogle = async (): Promise<FirebaseUser> => {
     return result.user;
   } catch (error) {
     console.error("Error signing in with Google: ", error);
-    // It's good practice to throw the error so the caller can handle it
     throw error;
   }
 };
@@ -55,5 +90,4 @@ export const signOutUser = async (): Promise<void> => {
   }
 };
 
-// Export FirebaseUser type if needed elsewhere, though direct usage in components is more common
 export type { FirebaseUser };
