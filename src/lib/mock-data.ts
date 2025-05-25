@@ -1,0 +1,58 @@
+import type { Product } from '@/types';
+
+export const mockProducts: Product[] = [
+  {
+    id: '1',
+    name: 'Crimson Velvet Armchair',
+    description: 'A luxurious armchair upholstered in deep crimson velvet, perfect for adding a touch of elegance.',
+    price: 399.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    stock: 15,
+    category: 'Furniture',
+  },
+  {
+    id: '2',
+    name: 'Obsidian Black Coffee Table',
+    description: 'Sleek and modern coffee table with a matte black finish and minimalist design.',
+    price: 179.50,
+    imageUrl: 'https://placehold.co/600x400.png',
+    stock: 25,
+    category: 'Furniture',
+  },
+  {
+    id: '3',
+    name: 'Charcoal Gray Throw Pillow',
+    description: 'Soft and comfortable throw pillow in a sophisticated charcoal gray, complements any decor.',
+    price: 29.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    stock: 50,
+    category: 'Decor',
+  },
+  {
+    id: '4',
+    name: 'Minimalist Desk Lamp',
+    description: 'A modern desk lamp with clean lines and adjustable arm, in a matte black finish.',
+    price: 75.00,
+    imageUrl: 'https://placehold.co/600x400.png',
+    stock: 30,
+    category: 'Lighting',
+  },
+  {
+    id: '5',
+    name: 'Crimson Red Ceramic Vase',
+    description: 'Striking ceramic vase in a bold crimson red, ideal for a statement floral arrangement.',
+    price: 45.00,
+    imageUrl: 'https://placehold.co/600x400.png',
+    stock: 22,
+    category: 'Decor',
+  },
+  {
+    id: '6',
+    name: 'Dark Walnut Bookshelf',
+    description: 'A sturdy and stylish bookshelf made from dark walnut, offering ample storage space.',
+    price: 249.99,
+    imageUrl: 'https://placehold.co/600x400.png',
+    stock: 12,
+    category: 'Furniture',
+  },
+];
