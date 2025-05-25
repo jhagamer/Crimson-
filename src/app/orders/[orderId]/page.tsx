@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +52,10 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
 
   const currentStatusIndex = statusSteps.findIndex(step => step.name === order.status);
   const progressValue = statusSteps[currentStatusIndex]?.progress ?? 0;
+  const shippingCost = 50.00; // Example shipping cost, ensure consistency if shown elsewhere
+  const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const tax = subtotal * 0.1; // Example 10% tax
+
 
   return (
     <div className="container mx-auto py-12">
@@ -84,9 +89,9 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
                   <Image src={item.imageUrl} alt={item.name} width={64} height={64} className="rounded-md object-cover" data-ai-hint={`${item.category.toLowerCase()} item small`}/>
                   <div className="flex-grow">
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">Qty: {item.quantity} - Price: ${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">Qty: {item.quantity} - Price: NRS {item.price.toFixed(2)}</p>
                   </div>
-                  <p className="font-semibold text-primary">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-semibold text-primary">NRS {(item.price * item.quantity).toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -106,11 +111,11 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
             <div>
               <h3 className="text-xl font-semibold mb-2">Order Summary</h3>
               <div className="text-sm space-y-1 p-3 border rounded-md bg-secondary/30">
-                <div className="flex justify-between"><span>Subtotal:</span> <span>${order.items.reduce((acc, item) => acc + item.price * item.quantity, 0).toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Shipping:</span> <span>$5.00</span></div> {/* Mock shipping */}
-                 <div className="flex justify-between"><span>Tax (10%):</span> <span>${(order.items.reduce((acc, item) => acc + item.price * item.quantity, 0)*0.1).toFixed(2)}</span></div> {/* Mock Tax */}
+                <div className="flex justify-between"><span>Subtotal:</span> <span>NRS {subtotal.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Shipping:</span> <span>NRS {shippingCost.toFixed(2)}</span></div>
+                 <div className="flex justify-between"><span>Tax (10%):</span> <span>NRS {tax.toFixed(2)}</span></div>
                 <Separator className="my-1"/>
-                <div className="flex justify-between font-bold text-base"><span>Total:</span> <span className="text-primary">${order.totalAmount.toFixed(2)}</span></div>
+                <div className="flex justify-between font-bold text-base"><span>Total:</span> <span className="text-primary">NRS {order.totalAmount.toFixed(2)}</span></div>
               </div>
             </div>
           </div>
@@ -123,3 +128,4 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
     </div>
   );
 }
+

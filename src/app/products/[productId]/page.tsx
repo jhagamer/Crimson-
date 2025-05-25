@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -82,8 +83,8 @@ export default function ProductDetailPage({ params }: { params: { productId: str
             <Separator className="my-6" />
 
             <div className="flex items-baseline mb-6">
-              <p className="text-4xl font-bold text-foreground">${product.price.toFixed(2)}</p>
-              {/* Old price for discount illusion - <p className="text-xl line-through text-muted-foreground ml-2">$ { (product.price * 1.2).toFixed(2) }</p> */}
+              <p className="text-4xl font-bold text-foreground">NRS {product.price.toFixed(2)}</p>
+              {/* Old price for discount illusion - <p className="text-xl line-through text-muted-foreground ml-2">NRS { (product.price * 1.2).toFixed(2) }</p> */}
             </div>
             
             <p className={`text-sm font-medium mb-6 ${product.stock > 0 ? 'text-green-500' : 'text-destructive'}`}>
@@ -117,7 +118,7 @@ export default function ProductDetailPage({ params }: { params: { productId: str
                         </div>
                         <CardContent className="p-4">
                             <h3 className="font-semibold text-md truncate">{p.name}</h3>
-                            <p className="text-primary font-bold">${p.price.toFixed(2)}</p>
+                            <p className="text-primary font-bold">NRS {p.price.toFixed(2)}</p>
                         </CardContent>
                     </Link>
                 </Card>
@@ -127,3 +128,4 @@ export default function ProductDetailPage({ params }: { params: { productId: str
     </div>
   );
 }
+

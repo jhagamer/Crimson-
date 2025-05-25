@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -112,7 +113,7 @@ export default function AdminProductsPage() {
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.category}</TableCell>
-                  <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">NRS {product.price.toFixed(2)}</TableCell>
                   <TableCell className="text-right">{product.stock}</TableCell>
                   <TableCell className="text-center">
                     <Button variant="ghost" size="icon" onClick={() => openEditModal(product)} className="mr-2 hover:text-primary">
@@ -152,7 +153,7 @@ export default function AdminProductsPage() {
               <Input id="category" name="category" value={productForm.category || ''} onChange={handleInputChange} className="col-span-3" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">Price</Label>
+              <Label htmlFor="price" className="text-right">Price (NRS)</Label>
               <Input id="price" name="price" type="number" step="0.01" value={productForm.price || ''} onChange={handleInputChange} className="col-span-3" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -175,3 +176,4 @@ export default function AdminProductsPage() {
     </div>
   );
 }
+

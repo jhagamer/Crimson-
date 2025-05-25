@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -63,7 +64,7 @@ export default function CartPage() {
                 </div>
                 <div className="flex-grow text-center sm:text-left">
                   <h2 className="text-lg font-semibold">{item.name}</h2>
-                  <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">NRS {item.price.toFixed(2)}</p>
                 </div>
                 <div className="flex items-center space-x-2 shrink-0">
                   <Button variant="outline" size="icon" onClick={() => handleQuantityChange(item.id, -1)}>
@@ -74,8 +75,8 @@ export default function CartPage() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="font-semibold text-primary shrink-0 w-20 text-center sm:text-right">
-                  ${(item.price * item.quantity).toFixed(2)}
+                <p className="font-semibold text-primary shrink-0 w-24 text-center sm:text-right">
+                  NRS {(item.price * item.quantity).toFixed(2)}
                 </p>
                 <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="text-destructive hover:text-destructive/80 shrink-0">
                   <Trash2 className="h-5 w-5" />
@@ -90,16 +91,16 @@ export default function CartPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>NRS {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax (10%)</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>NRS {tax.toFixed(2)}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span className="text-primary">${total.toFixed(2)}</span>
+                <span className="text-primary">NRS {total.toFixed(2)}</span>
               </div>
             </CardContent>
             <CardFooter>
@@ -113,3 +114,4 @@ export default function CartPage() {
     </div>
   );
 }
+

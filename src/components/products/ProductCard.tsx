@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -43,7 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <CardDescription className="text-muted-foreground text-sm mb-4 h-20 overflow-hidden text-ellipsis">
           {product.description}
         </CardDescription>
-        <p className="text-lg font-bold text-primary mb-2">${product.price.toFixed(2)}</p>
+        <p className="text-lg font-bold text-primary mb-2">NRS {product.price.toFixed(2)}</p>
         <p className="text-xs text-muted-foreground">
           {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
         </p>
@@ -63,3 +64,4 @@ export default function ProductCard({ product }: ProductCardProps) {
     </Card>
   );
 }
+

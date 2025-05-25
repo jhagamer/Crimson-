@@ -1,12 +1,16 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Truck, CheckCircle2, PackageSearch } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Truck, CheckCircle2, PackageSearch, QrCode } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Order } from '@/types';
+import QRCodeStylized from 'qrcode.react'; // Renamed to avoid conflict
+import { useToast } from '@/hooks/use-toast';
 
 // Mock delivery data
 const mockDeliveries: Partial<Order>[] = [
@@ -19,6 +23,9 @@ const mockDeliveries: Partial<Order>[] = [
 export default function DeliveryDashboardPage() {
   const [deliveries, setDeliveries] = useState<Partial<Order>[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [selectedOrderForQR, setSelectedOrderForQR] = useState<Partial<Order> | null>(null);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -29,7 +36,13 @@ export default function DeliveryDashboardPage() {
     if(!orderId) return;
     setDeliveries(prev => prev.map(d => d.id === orderId ? {...d, status: 'Delivered'} : d).filter(d => d.status !== 'Delivered'));
     // In a real app, this would be an API call
+    toast({title: "Order Updated", description: `Order ${orderId} marked as delivered (mock).`});
     console.log(`Order ${orderId} marked as delivered`);
+  };
+
+  const handleGenerateQR = (order: Partial<Order>) => {
+    setSelectedOrderForQR(order);
+    setIsQRModalOpen(true);
   };
 
   if (!isClient) {
@@ -41,9 +54,9 @@ export default function DeliveryDashboardPage() {
       <Card className="shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-primary flex items-center">
-            <Truck className="mr-3 h-8 w-8" /> Delivery Dashboard
+            <Truck className="mr-3 h-8 w-8" /> Delivery Dashboard (Worker Panel)
           </CardTitle>
-          <CardDescription>Manage your assigned deliveries.</CardDescription>
+          <CardDescription>Manage your assigned deliveries and generate QR codes for customer confirmation.</CardDescription>
         </CardHeader>
         <CardContent>
           {deliveries.length === 0 ? (
@@ -59,8 +72,8 @@ export default function DeliveryDashboardPage() {
                 <TableHead>Order ID</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Address</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-center">Action</TableHead>
+                <TableHead className="text-right">Total (NRS)</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -76,12 +89,17 @@ export default function DeliveryDashboardPage() {
                   <TableCell>
                     {delivery.shippingAddress?.street}, {delivery.shippingAddress?.city}
                   </TableCell>
-                  <TableCell className="text-right">${delivery.totalAmount?.toFixed(2)}</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-right">NRS {delivery.totalAmount?.toFixed(2)}</TableCell>
+                  <TableCell className="text-center space-x-2">
                     {delivery.status === 'Shipped' && (
-                      <Button size="sm" onClick={() => handleMarkAsDelivered(delivery.id)}>
-                        <CheckCircle2 className="mr-2 h-4 w-4" /> Mark Delivered
-                      </Button>
+                      <>
+                        <Button size="sm" onClick={() => handleMarkAsDelivered(delivery.id)}>
+                          <CheckCircle2 className="mr-2 h-4 w-4" /> Mark Delivered
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleGenerateQR(delivery)}>
+                          <QrCode className="mr-2 h-4 w-4" /> Show QR
+                        </Button>
+                      </>
                     )}
                      {delivery.status === 'Processing' && (
                       <Button size="sm" variant="outline" disabled>
@@ -96,6 +114,27 @@ export default function DeliveryDashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {selectedOrderForQR && (
+        <Dialog open={isQRModalOpen} onOpenChange={setIsQRModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delivery QR Code for Order: {selectedOrderForQR.id}</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col items-center justify-center p-4">
+              <QRCodeStylized value={selectedOrderForQR.id || 'error'} size={256} level="H" />
+              <p className="mt-4 text-sm text-muted-foreground">
+                Customer scans this QR to confirm delivery (mock functionality).
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                QR Value: {selectedOrderForQR.id}
+              </p>
+            </div>
+             <Button onClick={() => setIsQRModalOpen(false)} className="mt-4 w-full">Close</Button>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
+

@@ -68,7 +68,7 @@ export default function CheckoutPage() {
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shippingCost = 5.00; // Example shipping cost
+  const shippingCost = 50.00; // Example shipping cost in NRS
   const total = subtotal + shippingCost;
 
   if (!isClient) {
@@ -111,22 +111,22 @@ export default function CheckoutPage() {
             {cartItems.map(item => (
               <div key={item.id} className="flex justify-between items-center py-2 text-sm">
                 <span>{item.name} (x{item.quantity})</span>
-                <span>${(item.price * item.quantity).toFixed(2)}</span>
+                <span>NRS {(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
             <Separator className="my-2"/>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>NRS {subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Shipping</span>
-              <span>${shippingCost.toFixed(2)}</span>
+              <span>NRS {shippingCost.toFixed(2)}</span>
             </div>
             <Separator className="my-2"/>
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span className="text-primary">${total.toFixed(2)}</span>
+              <span className="text-primary">NRS {total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -156,3 +156,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
