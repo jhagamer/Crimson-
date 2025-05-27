@@ -11,8 +11,8 @@ import { useEffect, useState } from 'react';
 import type { CartItemType, Address } from '@/types';
 import { mockProducts } from '@/lib/mock-data';
 import { Label } from "@/components/ui/label";
-import { Input } from '@/components/ui/input';
-import { MapPin } from 'lucide-react'; // Import an icon for the button
+// Removed Input import as it's no longer directly used for tip
+import { MapPin } from 'lucide-react'; 
 
 export default function CheckoutPage() {
   const { toast } = useToast();
@@ -20,7 +20,9 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [tipAmount, setTipAmount] = useState<string>('');
+  const [tipAmount, setTipAmount] = useState<number>(0); // Changed to number, default to 0
+
+  const tipOptions = [0, 10, 20, 30]; // 0 for "No Tip"
 
   useEffect(() => {
     setIsClient(true);
@@ -45,12 +47,11 @@ export default function CheckoutPage() {
       });
       return;
     }
-    const parsedTip = parseFloat(tipAmount) || 0;
-
-    console.log('Placing order with Cash on Delivery, Tip:', parsedTip.toFixed(2));
+    
+    console.log('Placing order with Cash on Delivery, Tip:', tipAmount.toFixed(2));
     toast({
       title: 'Order Placed Successfully!',
-      description: `Your order (including a tip of NRS ${parsedTip.toFixed(2)}) will be delivered soon. Please pay upon delivery.`,
+      description: `Your order (including a tip of NRS ${tipAmount.toFixed(2)}) will be delivered soon. Please pay upon delivery.`,
     });
     router.push('/');
   };
@@ -78,9 +79,6 @@ export default function CheckoutPage() {
           description: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}. In a real app, this would update your address.`,
         });
         console.log('Fetched location:', { latitude, longitude });
-        // Mock update of address for demonstration purposes
-        // You would typically use a geocoding API here to convert lat/lon to a full address
-        // For now, we can simulate setting a part of the address or just log it
         setShippingAddress(prev => ({
           ...(prev || { street: '', city: '', state: '', zipCode: '', country: '' }),
           street: `Current Location (Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)})`,
@@ -112,9 +110,9 @@ export default function CheckoutPage() {
         console.error('Error getting location:', error);
       },
       {
-        enableHighAccuracy: true, // For precise location
-        timeout: 10000, // 10 seconds
-        maximumAge: 0, // Don't use a cached position
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0, 
       }
     );
   };
@@ -122,8 +120,7 @@ export default function CheckoutPage() {
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingCost = 50.00;
-  const parsedTip = parseFloat(tipAmount) || 0;
-  const total = subtotal + shippingCost + parsedTip;
+  const total = subtotal + shippingCost + tipAmount;
 
   if (!isClient) {
     return <div className="text-center py-10">Loading checkout...</div>;
@@ -163,7 +160,7 @@ export default function CheckoutPage() {
                  <Button
                     variant="outline"
                     onClick={handleUpdateAddressWithLocation}
-                    className="mb-2"
+                    className="mb-2 mr-2" // Added margin for spacing
                   >
                     <MapPin className="mr-2 h-4 w-4" /> Use Current Location
                   </Button>
@@ -193,21 +190,27 @@ export default function CheckoutPage() {
               <span className="text-muted-foreground">Shipping</span>
               <span>NRS {shippingCost.toFixed(2)}</span>
             </div>
+            
             <div className="space-y-2 mt-4">
-              <Label htmlFor="tipAmount" className="text-sm font-medium">Add a tip (NRS)</Label>
-              <Input 
-                id="tipAmount" 
-                type="number" 
-                placeholder="0.00" 
-                value={tipAmount}
-                onChange={(e) => setTipAmount(e.target.value)}
-                className="text-sm"
-              />
+              <Label className="text-sm font-medium">Add a tip for your delivery person</Label>
+              <div className="flex space-x-2">
+                {tipOptions.map((amount) => (
+                  <Button
+                    key={amount}
+                    variant={tipAmount === amount ? "default" : "outline"}
+                    onClick={() => setTipAmount(amount)}
+                    className="flex-1 text-sm"
+                  >
+                    {amount === 0 ? "No Tip" : `NRS ${amount}`}
+                  </Button>
+                ))}
+              </div>
             </div>
-             {parsedTip > 0 && (
-              <div className="flex justify-between text-sm mt-2">
-                <span className="text-muted-foreground">Tip</span>
-                <span>NRS {parsedTip.toFixed(2)}</span>
+
+             {tipAmount > 0 && (
+              <div className="flex justify-between text-sm mt-2 text-primary font-medium">
+                <span >Tip</span>
+                <span>NRS {tipAmount.toFixed(2)}</span>
               </div>
             )}
             <Separator className="my-2"/>
