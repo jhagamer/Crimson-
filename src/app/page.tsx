@@ -1,3 +1,4 @@
+
 import ProductList from '@/components/products/ProductList';
 import { mockProducts } from '@/lib/mock-data';
 import { Separator } from '@/components/ui/separator';
@@ -6,8 +7,8 @@ export default function HomePage() {
   return (
     <section className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight text-primary mb-2">Welcome to Crimson Commerce</h1>
-        <p className="text-xl text-muted-foreground">Discover our exclusive collection of finely curated items.</p>
+        <h1 className="text-4xl font-bold tracking-tight text-primary mb-2">Welcome to Crimson Cosmetics</h1>
+        <p className="text-xl text-muted-foreground">Discover our exclusive collection of premium beauty essentials.</p>
       </div>
       <Separator />
       <div>

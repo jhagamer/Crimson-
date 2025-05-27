@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Crimson Commerce',
-  description: 'Your online shop for exclusive items.',
+  title: 'Crimson Cosmetics',
+  description: 'Your online shop for premium beauty products and essentials.',
 };
 
 export default function RootLayout({

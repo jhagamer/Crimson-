@@ -11,22 +11,22 @@ import Image from 'next/image';
 
 // Mock order data - in a real app, this would be fetched
 const mockOrder: Order = {
-  id: 'ORD12345CRIMSON',
+  id: 'ORD12345BEAUTY', // Updated ID for relevance
   items: [
-    { id: '1', name: 'Crimson Velvet Armchair', description: '', price: 399.99, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Furniture', quantity: 1 },
-    { id: '3', name: 'Charcoal Gray Throw Pillow', description: '', price: 29.99, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Decor', quantity: 2 },
+    { id: '1', name: 'Radiant Glow Serum', description: 'A potent vitamin C serum to brighten and even out skin tone, leaving your skin with a radiant glow.', price: 45.00, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Skincare', quantity: 1 },
+    { id: '3', name: 'Crimson Kiss Lipstick', description: 'A luxurious, highly pigmented lipstick in our signature crimson shade with a satin finish.', price: 22.99, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Makeup', quantity: 2 },
   ],
-  totalAmount: 459.97,
+  totalAmount: (45.00 * 1) + (22.99 * 2) + 50.00 + (((45.00 * 1) + (22.99 * 2)) * 0.1), // Price + Shipping + Tax
   status: 'Shipped', // 'Pending', 'Processing', 'Shipped', 'Delivered'
   shippingAddress: {
-    street: '123 Crimson Ave',
-    city: 'Redtown',
-    state: 'CR',
-    zipCode: '54321',
-    country: 'Crimsonland',
+    street: '123 Beauty Ave',
+    city: 'Glamville',
+    state: 'CA',
+    zipCode: '90210',
+    country: 'Cosmetica',
   },
   createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-  trackingNumber: 'CRMSNTRK987654321',
+  trackingNumber: 'CRMSNBEAUTYTRK987',
 };
 
 const statusSteps = [
@@ -43,7 +43,9 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
   useEffect(() => {
     setIsClient(true);
     // Simulate fetching order details. params.orderId can be used here.
-    setOrder(mockOrder); 
+    // For this example, we'll use the updated mockOrder
+    const orderToDisplay = {...mockOrder, id: params.orderId || mockOrder.id};
+    setOrder(orderToDisplay); 
   }, [params.orderId]);
 
   if (!isClient || !order) {
@@ -52,7 +54,7 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
 
   const currentStatusIndex = statusSteps.findIndex(step => step.name === order.status);
   const progressValue = statusSteps[currentStatusIndex]?.progress ?? 0;
-  const shippingCost = 50.00; // Example shipping cost, ensure consistency if shown elsewhere
+  const shippingCost = 50.00; 
   const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const tax = subtotal * 0.1; // Example 10% tax
 
@@ -86,7 +88,7 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
             <div className="space-y-4">
               {order.items.map((item: CartItemType) => (
                 <div key={item.id} className="flex items-center gap-4 p-2 border rounded-md">
-                  <Image src={item.imageUrl} alt={item.name} width={64} height={64} className="rounded-md object-cover" data-ai-hint={`${item.category.toLowerCase()} item small`}/>
+                  <Image src={item.imageUrl} alt={item.name} width={64} height={64} className="rounded-md object-cover" data-ai-hint={`${item.category.toLowerCase()} product small`}/>
                   <div className="flex-grow">
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">Qty: {item.quantity} - Price: NRS {item.price.toFixed(2)}</p>
@@ -128,4 +130,3 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
     </div>
   );
 }
-

@@ -35,7 +35,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             layout="fill"
             objectFit="cover"
-            data-ai-hint={`${product.category.toLowerCase()} item`}
+            data-ai-hint={`${product.category.toLowerCase()} product`}
           />
         </div>
       </CardHeader>
@@ -64,4 +64,3 @@ export default function ProductCard({ product }: ProductCardProps) {
     </Card>
   );
 }
-

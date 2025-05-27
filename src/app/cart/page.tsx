@@ -60,7 +60,7 @@ export default function CartPage() {
             {cartItems.map(item => (
               <Card key={item.id} className="flex flex-col sm:flex-row items-center p-4 gap-4">
                 <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-md overflow-hidden shrink-0">
-                   <Image src={item.imageUrl} alt={item.name} layout="fill" objectFit="cover" data-ai-hint={`${item.category.toLowerCase()} item`} />
+                   <Image src={item.imageUrl} alt={item.name} layout="fill" objectFit="cover" data-ai-hint={`${item.category.toLowerCase()} product small`} />
                 </div>
                 <div className="flex-grow text-center sm:text-left">
                   <h2 className="text-lg font-semibold">{item.name}</h2>
@@ -114,4 +114,3 @@ export default function CartPage() {
     </div>
   );
 }
-

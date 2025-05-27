@@ -63,7 +63,7 @@ export default function ProductDetailPage({ params }: { params: { productId: str
                 alt={product.name}
                 layout="fill"
                 objectFit="cover"
-                data-ai-hint={`${product.category.toLowerCase()} item large`}
+                data-ai-hint={`${product.category.toLowerCase()} product large`}
               />
             </div>
           </CardHeader>
@@ -74,7 +74,7 @@ export default function ProductDetailPage({ params }: { params: { productId: str
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className={`h-5 w-5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
               ))}
-              <span className="ml-2 text-sm text-muted-foreground">(125 Reviews)</span> {/* Mock reviews */}
+              <span className="ml-2 text-sm text-muted-foreground">(48 Reviews)</span> {/* Mock reviews */}
             </div>
             <CardDescription className="text-base text-muted-foreground mb-6 leading-relaxed">
               {product.description}
@@ -114,7 +114,7 @@ export default function ProductDetailPage({ params }: { params: { productId: str
                 <Card key={p.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                     <Link href={`/products/${p.id}`}>
                         <div className="aspect-video relative w-full">
-                             <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" data-ai-hint={`${p.category.toLowerCase()} item related`}/>
+                             <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" data-ai-hint={`${p.category.toLowerCase()} product related`}/>
                         </div>
                         <CardContent className="p-4">
                             <h3 className="font-semibold text-md truncate">{p.name}</h3>
@@ -128,4 +128,3 @@ export default function ProductDetailPage({ params }: { params: { productId: str
     </div>
   );
 }
-

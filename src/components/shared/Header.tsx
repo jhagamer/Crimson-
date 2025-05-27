@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Package, LogOut, Settings, Truck, HomeIcon, Users } from 'lucide-react';
+import { ShoppingCart, User, Package, LogOut, Settings, Truck, HomeIcon, Users, SprayCan } from 'lucide-react'; // Added SprayCan for cosmetics
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { signOutUser } from '@/lib/firebase';
@@ -16,7 +16,6 @@ export default function Header() {
   const { toast } = useToast();
   const router = useRouter();
   
-  // Mock role for demonstration purposes.
   const isAdmin = currentUser?.email === 'admin@example.com' || currentUser?.email === 'shopcrimsonhouse@gmail.com';
   const isWorker = currentUser?.email === 'worker@example.com';
   
@@ -30,6 +29,7 @@ export default function Header() {
       userRole = 'customer';
     }
   }
+
 
   const handleLogout = async () => {
     try {
@@ -57,7 +57,7 @@ export default function Header() {
     <header className="bg-card border-b border-border shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors flex items-center">
-          <HomeIcon className="mr-2 h-7 w-7" /> Crimson Commerce
+          <SprayCan className="mr-2 h-7 w-7" /> Crimson Cosmetics
         </Link>
         <nav className="flex items-center space-x-1 sm:space-x-2">
           <Button variant="ghost" asChild className="hidden sm:inline-flex text-sm">

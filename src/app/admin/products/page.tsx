@@ -85,7 +85,7 @@ export default function AdminProductsPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-3xl font-bold text-primary">Manage Products</CardTitle>
-            <CardDescription>Add, edit, or delete products in your store.</CardDescription>
+            <CardDescription>Add, edit, or delete cosmetic products in your store.</CardDescription>
           </div>
           <Button onClick={openAddModal}>
             <PlusCircle className="mr-2 h-5 w-5" /> Add Product
@@ -127,7 +127,7 @@ export default function AdminProductsPage() {
               ))}
             </TableBody>
           </Table>
-          {products.length === 0 && <p className="text-center text-muted-foreground py-8">No products yet. Add your first product!</p>}
+          {products.length === 0 && <p className="text-center text-muted-foreground py-8">No products yet. Add your first cosmetic product!</p>}
         </CardContent>
       </Card>
 
@@ -136,7 +136,7 @@ export default function AdminProductsPage() {
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             <DialogDescription>
-              {editingProduct ? 'Update the details of this product.' : 'Fill in the details for the new product.'}
+              {editingProduct ? 'Update the details of this cosmetic product.' : 'Fill in the details for the new cosmetic product.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFormSubmit} className="grid gap-4 py-4">
@@ -150,7 +150,7 @@ export default function AdminProductsPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="category" className="text-right">Category</Label>
-              <Input id="category" name="category" value={productForm.category || ''} onChange={handleInputChange} className="col-span-3" required />
+              <Input id="category" name="category" value={productForm.category || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., Skincare, Makeup, Haircare" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right">Price (NRS)</Label>
@@ -176,4 +176,3 @@ export default function AdminProductsPage() {
     </div>
   );
 }
-
