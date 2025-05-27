@@ -9,6 +9,7 @@ import { signOutUser } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import ThemeSwitcher from './ThemeSwitcher';
 
 
 export default function Header() {
@@ -100,6 +101,8 @@ export default function Header() {
               </Link>
             </Button>
           )}
+          
+          <ThemeSwitcher />
 
           {loading ? (
             <Button variant="outline" size="icon" disabled>

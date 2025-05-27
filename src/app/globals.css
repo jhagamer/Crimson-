@@ -8,6 +8,7 @@ body {
 
 @layer base {
   :root {
+    /* Default: Crimson Light Theme */
     --background: 0 0% 100%; /* Default light background */
     --foreground: 0 0% 3.9%; /* Default light foreground */
 
@@ -99,6 +100,99 @@ body {
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 348 83% 57%;
+  }
+
+  .theme-peach {
+    --background: 30 100% 96%;
+    --foreground: 25 30% 25%;
+    --card: 30 100% 97%;
+    --card-foreground: 25 30% 25%;
+    --popover: 30 100% 97%;
+    --popover-foreground: 25 30% 25%;
+    --primary: 28 85% 60%;
+    --primary-foreground: 20 50% 98%;
+    --secondary: 30 70% 90%;
+    --secondary-foreground: 25 30% 35%;
+    --muted: 30 70% 92%;
+    --muted-foreground: 25 30% 45%;
+    --accent: 35 75% 55%;
+    --accent-foreground: 20 50% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 60% 88%;
+    --input: 30 60% 88%;
+    --ring: 28 85% 60%;
+    /* Sidebar vars - inherit from :root or define explicitly */
+    --sidebar-background: 30 100% 95%;
+    --sidebar-foreground: 25 30% 30%;
+    --sidebar-primary: 28 85% 60%;
+    --sidebar-primary-foreground: 20 50% 98%;
+    --sidebar-accent: 35 75% 55%;
+    --sidebar-accent-foreground: 20 50% 98%;
+    --sidebar-border: 30 60% 85%;
+    --sidebar-ring: 28 85% 60%;
+  }
+
+  .theme-lavender {
+    --background: 270 70% 96%;
+    --foreground: 270 25% 20%;
+    --card: 270 70% 97%;
+    --card-foreground: 270 25% 20%;
+    --popover: 270 70% 97%;
+    --popover-foreground: 270 25% 20%;
+    --primary: 265 75% 65%;
+    --primary-foreground: 270 60% 98%;
+    --secondary: 270 60% 90%;
+    --secondary-foreground: 270 25% 30%;
+    --muted: 270 60% 92%;
+    --muted-foreground: 270 25% 45%;
+    --accent: 275 60% 60%;
+    --accent-foreground: 270 60% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 270 50% 88%;
+    --input: 270 50% 88%;
+    --ring: 265 75% 65%;
+    /* Sidebar vars */
+    --sidebar-background: 270 70% 95%;
+    --sidebar-foreground: 270 25% 25%;
+    --sidebar-primary: 265 75% 65%;
+    --sidebar-primary-foreground: 270 60% 98%;
+    --sidebar-accent: 275 60% 60%;
+    --sidebar-accent-foreground: 270 60% 98%;
+    --sidebar-border: 270 50% 85%;
+    --sidebar-ring: 265 75% 65%;
+  }
+
+  .theme-blush-pink {
+    --background: 340 100% 96%;
+    --foreground: 340 30% 25%;
+    --card: 340 100% 97%;
+    --card-foreground: 340 30% 25%;
+    --popover: 340 100% 97%;
+    --popover-foreground: 340 30% 25%;
+    --primary: 335 80% 70%;
+    --primary-foreground: 340 50% 98%;
+    --secondary: 340 70% 92%;
+    --secondary-foreground: 340 30% 35%;
+    --muted: 340 70% 94%;
+    --muted-foreground: 340 30% 45%;
+    --accent: 345 70% 60%;
+    --accent-foreground: 340 50% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 340 60% 90%;
+    --input: 340 60% 90%;
+    --ring: 335 80% 70%;
+    /* Sidebar vars */
+    --sidebar-background: 340 100% 95%;
+    --sidebar-foreground: 340 30% 30%;
+    --sidebar-primary: 335 80% 70%;
+    --sidebar-primary-foreground: 340 50% 98%;
+    --sidebar-accent: 345 70% 60%;
+    --sidebar-accent-foreground: 340 50% 98%;
+    --sidebar-border: 340 60% 88%;
+    --sidebar-ring: 335 80% 70%;
   }
 }
 
