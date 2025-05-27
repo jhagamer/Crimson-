@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { signInOrUpWithOtpEmail } from '@/lib/firebase'; // Updated import
+import { signInOrUpWithOtpEmail } from '@/lib/firebase';
 import { Mail, ShieldCheck, LogIn } from 'lucide-react';
 
 type AuthStep = 'email' | 'otp';
@@ -22,7 +22,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const MOCK_OTP = "123456"; // This remains for simulation
+  // IMPORTANT: This is a MOCK OTP for prototyping.
+  // In a real production application, OTPs must be securely generated,
+  // sent via a backend service (e.g., SMS/email), and verified on the server.
+  const MOCK_OTP = "123456"; 
 
   const resetFormFields = () => {
     // Email is kept for the OTP step
@@ -43,9 +46,10 @@ export default function LoginPage() {
     }
 
     // Simulate OTP request
+    // In a real app, this would trigger a backend call to send an OTP.
     toast({
       title: 'OTP Sent (Mock)',
-      description: `If your email is valid, an OTP (mock: ${MOCK_OTP}) has been 'sent' to ${email}.`,
+      description: `For this prototype, an OTP (mock: ${MOCK_OTP}) has been 'sent' to ${email}. In production, this would be a real OTP.`,
     });
     setAuthStep('otp');
     setIsLoading(false);
@@ -57,7 +61,7 @@ export default function LoginPage() {
     setAuthError(null);
 
     if (otp !== MOCK_OTP) {
-      const otpError = `Invalid OTP. Please try again (mock OTP is ${MOCK_OTP}).`;
+      const otpError = `Invalid OTP. For this prototype, the mock OTP is ${MOCK_OTP}.`;
       setAuthError(otpError);
       toast({
         title: 'OTP Verification Failed',
@@ -69,7 +73,8 @@ export default function LoginPage() {
     }
 
     try {
-      await signInOrUpWithOtpEmail(email); // Use the new Firebase utility
+      // This function will sign in or create an account using email and a dummy password (hidden from user).
+      await signInOrUpWithOtpEmail(email); 
       toast({
         title: 'Login Successful!',
         description: `Welcome! You are now logged in.`,
@@ -77,10 +82,7 @@ export default function LoginPage() {
       router.push('/'); // Redirect to home page
     } catch (error: any) {
       console.error('OTP Login/Signup Error:', error);
-      let errorMessage = 'An error occurred. Please try again.';
-      if (error.code) { // Firebase errors usually have a code
-        errorMessage = error.message; // Use Firebase's error message
-      }
+      let errorMessage = error.message || 'An error occurred. Please try again.';
       setAuthError(errorMessage);
       toast({ title: 'Login Failed', description: errorMessage, variant: 'destructive' });
     }
@@ -113,16 +115,17 @@ export default function LoginPage() {
   const renderOtpForm = () => (
      <form onSubmit={handleOtpSubmit} className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        An OTP (mock: <strong className="text-primary">{MOCK_OTP}</strong>) was 'sent' to <strong>{email}</strong>.
+        An OTP for this prototype (mock: <strong className="text-primary">{MOCK_OTP}</strong>) was 'sent' to <strong>{email}</strong>.
+        Enter it below.
       </p>
       <div>
         <Label htmlFor="otp" className="flex items-center mb-1">
-          <ShieldCheck className="mr-2 h-4 w-4 text-muted-foreground" /> One-Time Password
+          <ShieldCheck className="mr-2 h-4 w-4 text-muted-foreground" /> One-Time Password (Mock)
         </Label>
         <Input
           id="otp"
           type="text"
-          placeholder="Enter OTP"
+          placeholder="Enter Mock OTP"
           value={otp}
           onChange={(e) => setOtp(e.target.value)}
           required
@@ -157,8 +160,8 @@ export default function LoginPage() {
           </CardTitle>
           <CardDescription>
             {authStep === 'email'
-              ? 'Enter your email to receive a One-Time Password (OTP).'
-              : `Enter the OTP 'sent' to your email (mock: ${MOCK_OTP}).`}
+              ? 'Enter your email to receive a One-Time Password (OTP) for this prototype.'
+              : `Enter the OTP 'sent' to your email (mock OTP for prototype: ${MOCK_OTP}).`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
@@ -166,7 +169,8 @@ export default function LoginPage() {
         </CardContent>
          <CardFooter className="flex-col items-center space-y-2">
            <p className="text-xs text-muted-foreground px-6 text-center">
-            This is a prototype. OTPs are mocked and no actual emails are sent. Accounts are created if they don't exist upon OTP verification.
+            This is a prototype using a mock OTP system. No actual emails are sent. 
+            Accounts are automatically created if they don't exist upon OTP verification using a dummy password.
           </p>
         </CardFooter>
       </Card>
