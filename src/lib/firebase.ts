@@ -11,16 +11,14 @@ import {
 } from 'firebase/auth';
 
 // IMPORTANT:
-// For Firebase Authentication to work, especially with Google Sign-In:
+// For Firebase Authentication to work:
 // 1. Ensure your .env.local file has the CORRECT Firebase project credentials.
 // 2. In your Firebase Console (https://console.firebase.google.com/):
 //    a. Go to Authentication -> Sign-in method.
-//    b. Ensure the "Google" provider is ENABLED (if you plan to use it).
-//    c. Ensure "Email/Password" provider is ENABLED.
-//    d. Add your application's domain(s) to the "Authorized domains" list.
+//    b. Ensure "Email/Password" provider is ENABLED.
+//    c. Add your application's domain(s) to the "Authorized domains" list.
 //       This typically includes 'localhost' for local development and any
 //       deployment domains (e.g., your-project.cloudworkstations.dev).
-//    The error 'auth/configuration-not-found' often points to issues here.
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -36,9 +34,7 @@ const placeholderValues = {
   apiKey: "YOUR_ACTUAL_API_KEY_HERE", 
   authDomain: "YOUR_ACTUAL_AUTH_DOMAIN_HERE",
   projectId: "YOUR_ACTUAL_PROJECT_ID_HERE", 
-  storageBucket: "YOUR_ACTUAL_STORAGE_BUCKET_HERE", 
-  messagingSenderId: "YOUR_ACTUAL_MESSAGING_SENDER_ID_HERE",
-  appId: "YOUR_ACTUAL_APP_ID_HERE" 
+  // storageBucket and others can be checked too if strictly needed for core auth
 };
 
 let configError = false;
@@ -58,15 +54,13 @@ if (!configError) {
   }
 }
 
-
 if (configError) {
   console.error("---");
   console.error("IMPORTANT: If you've just updated your .env.local file with actual Firebase credentials, you MUST RESTART your Next.js development server for the changes to take effect.");
   console.error("Firebase initialization might fail due to the configuration issues listed above.");
-  console.error("Also, ensure Email/Password sign-in (and Google Sign-In, if used) is enabled and your app domain (e.g., localhost, your-deployment-domain.com) is an 'Authorized domain' in your Firebase project's Authentication settings page in the Firebase Console.");
+  console.error("Also, ensure Email/Password sign-in is enabled and your app domain (e.g., localhost, your-deployment-domain.com) is an 'Authorized domain' in your Firebase project's Authentication settings page in the Firebase Console.");
   console.error("---");
 }
-
 
 // Initialize Firebase
 let app: FirebaseApp;
@@ -77,24 +71,34 @@ if (!getApps().length) {
 }
 
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+// Google Provider is kept for now, but not used in the primary login flow
+export const googleProvider = new GoogleAuthProvider(); 
 
-export const signInWithEmailAndPassword = firebaseSignInWithEmailAndPassword;
-export const signUpWithEmailAndPassword = firebaseCreateUserWithEmailAndPassword;
+const DUMMY_PASSWORD_FOR_OTP_PROTOTYPE = "prototypeOtpLoginPassword123!";
 
-
-export const signInWithGoogle = async (): Promise<FirebaseUser> => {
+export const signInOrUpWithOtpEmail = async (email: string): Promise<FirebaseUser> => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
-  } catch (error) {
-    console.error("Error signing in with Google: ", error);
-    if ((error as any).code === 'auth/configuration-not-found') {
-        console.error("Detailed Firebase auth/configuration-not-found: This usually means Google Sign-In is not enabled in your Firebase project's Authentication settings, or your app's domain (e.g., localhost, your-deployment-domain.com) is not added to the 'Authorized domains' list there.");
+    // Try to sign in first
+    const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, DUMMY_PASSWORD_FOR_OTP_PROTOTYPE);
+    return userCredential.user;
+  } catch (error: any) {
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+      // If user not found or generic invalid credential (which can happen if password is wrong for an existing user,
+      // but for our dummy password flow, we assume it means new user), try to create a new user.
+      try {
+        const newUserCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, DUMMY_PASSWORD_FOR_OTP_PROTOTYPE);
+        return newUserCredential.user;
+      } catch (signUpError: any) {
+        console.error("Error creating user during OTP flow: ", signUpError);
+        throw signUpError; // Re-throw sign-up error
+      }
+    } else {
+      console.error("Error signing in during OTP flow: ", error);
+      throw error; // Re-throw other sign-in errors
     }
-    throw error;
   }
 };
+
 
 export const signOutUser = async (): Promise<void> => {
   try {
@@ -106,4 +110,7 @@ export const signOutUser = async (): Promise<void> => {
 };
 
 export type { FirebaseUser };
-
+// Export original email/password functions if they might be needed elsewhere, or remove if truly unused.
+// For now, keeping them commented out as the primary flow changed.
+// export const signInWithEmailAndPassword = firebaseSignInWithEmailAndPassword;
+// export const signUpWithEmailAndPassword = firebaseCreateUserWithEmailAndPassword;

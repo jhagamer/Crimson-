@@ -2,13 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Package, LogIn, LogOut, Settings, Truck, HomeIcon, Users } from 'lucide-react'; // Added Users
+import { ShoppingCart, User, Package, LogOut, Settings, Truck, HomeIcon, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth'; // Import the custom auth hook
-import { signOutUser } from '@/lib/firebase'; // Import the signOut function
+import { useAuth } from '@/hooks/useAuth';
+import { signOutUser } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image'; // For user avatar
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 
@@ -17,12 +16,20 @@ export default function Header() {
   const { toast } = useToast();
   const router = useRouter();
   
-  // Mock role for demonstration purposes. In a real app, this would come from your backend/Firestore.
-  // To test different roles, you can change this value:
-  // const userRole = currentUser ? 'customer' : null; 
-  // const userRole = currentUser ? 'admin' : null;
-  const userRole = currentUser ? (currentUser.email === 'admin@example.com' ? 'admin' : (currentUser.email === 'worker@example.com' ? 'worker' : 'customer')) : null;
-
+  // Mock role for demonstration purposes.
+  const isAdmin = currentUser?.email === 'admin@example.com' || currentUser?.email === 'shopcrimsonhouse@gmail.com';
+  const isWorker = currentUser?.email === 'worker@example.com';
+  
+  let userRole: 'admin' | 'worker' | 'customer' | null = null;
+  if (currentUser) {
+    if (isAdmin) {
+      userRole = 'admin';
+    } else if (isWorker) {
+      userRole = 'worker';
+    } else {
+      userRole = 'customer';
+    }
+  }
 
   const handleLogout = async () => {
     try {
@@ -31,7 +38,7 @@ export default function Header() {
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
-      router.push('/login'); // Redirect to login page after logout
+      router.push('/login'); 
     } catch (error: any) {
       toast({
         title: 'Logout Failed',
@@ -41,12 +48,10 @@ export default function Header() {
     }
   };
 
-  // Get first letter of email for Avatar Fallback
   const getInitials = (email?: string | null) => {
     if (!email) return '';
     return email.charAt(0).toUpperCase();
   }
-
 
   return (
     <header className="bg-card border-b border-border shadow-md sticky top-0 z-50">
@@ -66,13 +71,14 @@ export default function Header() {
           
           {currentUser && (
             <Button variant="ghost" asChild size="sm" className="hidden sm:inline-flex">
-              <Link href="/orders/ORD12345CRIMSON" className="flex items-center text-foreground hover:text-primary transition-colors"> {/* Mock order ID */}
+              {/* Using a mock order ID for now. This should be dynamic in a real app. */}
+              <Link href={`/orders/${currentUser.uid}-mockOrder`} className="flex items-center text-foreground hover:text-primary transition-colors">
                 <Package className="mr-1 h-5 w-5" /> Orders
               </Link>
             </Button>
           )}
 
-          {currentUser && userRole === 'admin' && (
+          {userRole === 'admin' && (
             <>
               <Button variant="ghost" asChild size="sm" className="hidden sm:inline-flex">
                 <Link href="/admin/products" className="flex items-center text-foreground hover:text-primary transition-colors">
@@ -87,7 +93,7 @@ export default function Header() {
             </>
           )}
 
-          {currentUser && userRole === 'worker' && (
+          {userRole === 'worker' && (
             <Button variant="ghost" asChild size="sm" className="hidden sm:inline-flex">
               <Link href="/delivery/dashboard" className="flex items-center text-foreground hover:text-primary transition-colors">
                 <Truck className="mr-1 h-5 w-5" /> Delivery Panel
@@ -102,7 +108,8 @@ export default function Header() {
           ) : currentUser ? (
             <>
               <Button variant="ghost" asChild size="sm" className="px-2 sm:px-3">
-                <Link href="/profile" className="flex items-center text-foreground hover:text-primary transition-colors">
+                 {/* Profile link could go to a user profile page if it exists */}
+                <Link href="#" className="flex items-center text-foreground hover:text-primary transition-colors" onClick={(e) => e.preventDefault()} title={currentUser.email || "User Profile"}>
                    <Avatar className="h-6 w-6 sm:h-7 sm:w-7 mr-0 sm:mr-2">
                     {currentUser.photoURL ? (
                       <AvatarImage src={currentUser.photoURL} alt={currentUser.displayName || currentUser.email || 'User'} />
@@ -112,17 +119,14 @@ export default function Header() {
                   <span className="hidden sm:inline text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px]">{currentUser.displayName || currentUser.email}</span>
                 </Link>
               </Button>
-              <Button variant="outline" onClick={handleLogout} size="icon" title="Logout"  className="hidden sm:inline-flex">
-                <LogOut className="h-5 w-5" />
-              </Button>
-               <Button variant="ghost" onClick={handleLogout} size="icon" title="Logout" className="sm:hidden inline-flex">
-                <LogOut className="h-5 w-5" />
+              <Button variant="outline" onClick={handleLogout} title="Logout" className="flex items-center" size="sm">
+                <LogOut className="mr-0 sm:mr-1 h-5 w-5" /> <span className="hidden sm:inline">Logout</span>
               </Button>
             </>
           ) : (
             <Button variant="default" asChild size="sm">
               <Link href="/login" className="flex items-center">
-                <LogIn className="mr-1 h-5 w-5" /> Login
+                 Login
               </Link>
             </Button>
           )}
@@ -131,4 +135,3 @@ export default function Header() {
     </header>
   );
 }
-
