@@ -10,8 +10,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { CartItemType, Address } from '@/types';
 import { mockProducts } from '@/lib/mock-data';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input'; // Added Input for tip
 
 export default function CheckoutPage() {
   const { toast } = useToast();
@@ -19,7 +19,7 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
+  const [tipAmount, setTipAmount] = useState<string>(''); // State for tip amount
 
   useEffect(() => {
     setIsClient(true);
@@ -35,7 +35,6 @@ export default function CheckoutPage() {
     });
   }, []);
 
-
   const handlePayment = () => {
     if (!shippingAddress) {
       toast({
@@ -45,31 +44,22 @@ export default function CheckoutPage() {
       });
       return;
     }
+    const parsedTip = parseFloat(tipAmount) || 0;
 
-    if (paymentMethod === 'card') {
-      console.log('Proceeding to Stripe payment');
-      toast({
-        title: 'Redirecting to Payment (Mock)',
-        description: 'You would now be redirected to Stripe.',
-      });
-      // In a real app, you might redirect to a Stripe checkout session
-      // For now, we can simulate by redirecting to order tracking or home.
-      // router.push(`/orders/ORD12345CRIMSON`); // Example redirect
-    } else if (paymentMethod === 'cod') {
-      console.log('Placing order with Cash on Delivery');
-      toast({
-        title: 'Order Placed Successfully!',
-        description: 'Your order will be delivered soon. Please pay upon delivery.',
-      });
-      // Clear cart (mock) and redirect to home or an order confirmation page
-      // setCartItems([]); // If cart was global state, dispatch an action here
-      router.push('/'); // Redirect to home page for simplicity
-    }
+    console.log('Placing order with Cash on Delivery, Tip:', parsedTip.toFixed(2));
+    toast({
+      title: 'Order Placed Successfully!',
+      description: `Your order (including a tip of NRS ${parsedTip.toFixed(2)}) will be delivered soon. Please pay upon delivery.`,
+    });
+    // Clear cart (mock) and redirect to home or an order confirmation page
+    // setCartItems([]); // If cart was global state, dispatch an action here
+    router.push('/'); // Redirect to home page for simplicity
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingCost = 50.00; // Example shipping cost in NRS
-  const total = subtotal + shippingCost;
+  const parsedTip = parseFloat(tipAmount) || 0;
+  const total = subtotal + shippingCost + parsedTip;
 
   if (!isClient) {
     return <div className="text-center py-10">Loading checkout...</div>;
@@ -123,6 +113,23 @@ export default function CheckoutPage() {
               <span className="text-muted-foreground">Shipping</span>
               <span>NRS {shippingCost.toFixed(2)}</span>
             </div>
+            <div className="space-y-2 mt-4">
+              <Label htmlFor="tipAmount" className="text-sm font-medium">Add a tip (NRS)</Label>
+              <Input 
+                id="tipAmount" 
+                type="number" 
+                placeholder="0.00" 
+                value={tipAmount}
+                onChange={(e) => setTipAmount(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+             {parsedTip > 0 && (
+              <div className="flex justify-between text-sm mt-2">
+                <span className="text-muted-foreground">Tip</span>
+                <span>NRS {parsedTip.toFixed(2)}</span>
+              </div>
+            )}
             <Separator className="my-2"/>
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
@@ -134,16 +141,10 @@ export default function CheckoutPage() {
 
           <div>
             <h3 className="text-xl font-semibold mb-3">Payment Method</h3>
-            <RadioGroup value={paymentMethod} onValueChange={(value: 'card' | 'cod') => setPaymentMethod(value)} className="space-y-2">
-              <div className="flex items-center space-x-2 p-3 border rounded-md hover:border-primary transition-colors cursor-pointer has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:ring-1 has-[[data-state=checked]]:ring-primary">
-                <RadioGroupItem value="card" id="card" />
-                <Label htmlFor="card" className="flex-grow cursor-pointer">Credit/Debit Card (Mock Stripe)</Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-md hover:border-primary transition-colors cursor-pointer has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:ring-1 has-[[data-state=checked]]:ring-primary">
-                <RadioGroupItem value="cod" id="cod" />
-                <Label htmlFor="cod" className="flex-grow cursor-pointer">Cash on Delivery</Label>
-              </div>
-            </RadioGroup>
+            <div className="p-3 border rounded-md bg-secondary/20">
+              <Label className="flex-grow">Cash on Delivery</Label>
+              <p className="text-xs text-muted-foreground mt-1">You will pay when your order arrives.</p>
+            </div>
           </div>
 
         </CardContent>
@@ -156,4 +157,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
