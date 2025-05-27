@@ -8,10 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { CartItemType, Address } from '@/types';
+import type { CartItemType, Address, Order } from '@/types';
 import { mockProducts } from '@/lib/mock-data';
 import { Label } from "@/components/ui/label";
-// Removed Input import as it's no longer directly used for tip
 import { MapPin } from 'lucide-react'; 
 
 export default function CheckoutPage() {
@@ -20,22 +19,28 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [tipAmount, setTipAmount] = useState<number>(0); // Changed to number, default to 0
+  const [tipAmount, setTipAmount] = useState<number>(0);
 
-  const tipOptions = [0, 10, 20, 30]; // 0 for "No Tip"
+  const tipOptions = [0, 10, 20, 30]; 
 
   useEffect(() => {
     setIsClient(true);
     // Simulate fetching cart items and address
     const initialCartItems: CartItemType[] = mockProducts.slice(0, 1).map(p => ({ ...p, quantity: 2 }));
     setCartItems(initialCartItems);
-    setShippingAddress({
-      street: '123 Crimson Way',
-      city: 'Redville',
-      state: 'CR',
-      zipCode: '12345',
-      country: 'Crimsonland'
-    });
+    // Try to load address from localStorage or set a default mock
+    const savedAddress = localStorage.getItem('shippingAddress');
+    if (savedAddress) {
+      setShippingAddress(JSON.parse(savedAddress));
+    } else {
+      setShippingAddress({
+        street: '123 Crimson Way',
+        city: 'Redville',
+        state: 'CR',
+        zipCode: '12345',
+        country: 'Crimsonland'
+      });
+    }
   }, []);
 
   const handlePayment = () => {
@@ -45,17 +50,46 @@ export default function CheckoutPage() {
         description: 'Please add a shipping address before proceeding to payment.',
         variant: 'destructive',
       });
+      router.push('/address'); // Redirect to address page if no address
+      return;
+    }
+    if (cartItems.length === 0) {
+      toast({
+        title: 'Empty Cart',
+        description: 'Your cart is empty. Please add items before checking out.',
+        variant: 'destructive',
+      });
+      router.push('/');
       return;
     }
     
-    console.log('Placing order with Cash on Delivery, Tip:', tipAmount.toFixed(2));
+    const mockOrderId = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const newOrder: Order = {
+      id: mockOrderId,
+      items: cartItems,
+      totalAmount: total, // Use the calculated total including tip
+      status: 'Processing', // Initial status
+      shippingAddress: shippingAddress,
+      createdAt: new Date().toISOString(),
+      trackingNumber: `CMTRK${Date.now()}`,
+    };
+
+    // Save order details to localStorage (mocking backend save)
+    localStorage.setItem(`orderDetails_${mockOrderId}`, JSON.stringify(newOrder));
+    localStorage.setItem('lastPlacedOrderId', mockOrderId);
+    
+    // Clear cart (mock)
+    setCartItems([]); 
+    // Potentially clear cart from localStorage if it's stored there too
+
     toast({
       title: 'Order Placed Successfully!',
-      description: `Your order (including a tip of NRS ${tipAmount.toFixed(2)}) will be delivered soon. Please pay upon delivery.`,
+      description: `Your order #${mockOrderId} (including a tip of NRS ${tipAmount.toFixed(2)}) will be delivered soon. You can track its status.`,
+      duration: 5000,
     });
-    router.push('/');
+    router.push(`/orders/${mockOrderId}`);
   };
-
+  
   const handleUpdateAddressWithLocation = () => {
     if (!navigator.geolocation) {
       toast({
@@ -74,17 +108,19 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        toast({
-          title: 'Location Fetched (Mock)',
-          description: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}. In a real app, this would update your address.`,
-        });
-        console.log('Fetched location:', { latitude, longitude });
-        setShippingAddress(prev => ({
-          ...(prev || { street: '', city: '', state: '', zipCode: '', country: '' }),
+        const newMockAddress: Address = {
           street: `Current Location (Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)})`,
           city: 'Nearby City (Geocoded)',
+          state: 'Auto',
+          zipCode: '00000',
           country: 'Current Country (Geocoded)'
-        }));
+        };
+        setShippingAddress(newMockAddress);
+        localStorage.setItem('shippingAddress', JSON.stringify(newMockAddress)); // Save to localStorage
+        toast({
+          title: 'Location Updated (Mock)',
+          description: `Address updated to current location.`,
+        });
       },
       (error) => {
         let message = 'An error occurred while fetching your location.';
@@ -107,7 +143,6 @@ export default function CheckoutPage() {
           description: message,
           variant: 'destructive',
         });
-        console.error('Error getting location:', error);
       },
       {
         enableHighAccuracy: true,
@@ -160,7 +195,7 @@ export default function CheckoutPage() {
                  <Button
                     variant="outline"
                     onClick={handleUpdateAddressWithLocation}
-                    className="mb-2 mr-2" // Added margin for spacing
+                    className="mb-2 mr-2"
                   >
                     <MapPin className="mr-2 h-4 w-4" /> Use Current Location
                   </Button>
@@ -175,12 +210,12 @@ export default function CheckoutPage() {
 
           <div>
             <h3 className="text-xl font-semibold mb-2">Order Summary</h3>
-            {cartItems.map(item => (
+            {cartItems.length > 0 ? cartItems.map(item => (
               <div key={item.id} className="flex justify-between items-center py-2 text-sm">
                 <span>{item.name} (x{item.quantity})</span>
                 <span>NRS {(item.price * item.quantity).toFixed(2)}</span>
               </div>
-            ))}
+            )) : <p className="text-sm text-muted-foreground">Your cart is empty.</p>}
             <Separator className="my-2"/>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
@@ -232,7 +267,11 @@ export default function CheckoutPage() {
 
         </CardContent>
         <CardFooter>
-          <Button onClick={handlePayment} className="w-full" disabled={!shippingAddress && cartItems.length === 0}>
+          <Button 
+            onClick={handlePayment} 
+            className="w-full" 
+            disabled={!shippingAddress || cartItems.length === 0}
+          >
             Place Order
           </Button>
         </CardFooter>
@@ -240,4 +279,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Package, LogOut, Settings, Truck, HomeIcon, Users, SprayCan } from 'lucide-react'; // Added SprayCan for cosmetics
+import { ShoppingCart, User, Package, LogOut, Settings, Truck, Users, SprayCan } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { signOutUser } from '@/lib/firebase';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import ThemeSwitcher from './ThemeSwitcher';
+import { useEffect, useState } from 'react';
 
 
 export default function Header() {
@@ -31,10 +32,36 @@ export default function Header() {
     }
   }
 
+  const [isClient, setIsClient] = useState(false);
+  const [ordersLinkHref, setOrdersLinkHref] = useState('/orders/history');
+  const [ordersLinkText, setOrdersLinkText] = useState('Order History');
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && currentUser) {
+      const lastPlacedOrderId = localStorage.getItem('lastPlacedOrderId');
+      if (lastPlacedOrderId) {
+        setOrdersLinkHref(`/orders/${lastPlacedOrderId}`);
+        setOrdersLinkText('Track Last Order');
+      } else {
+        setOrdersLinkHref('/orders/history');
+        setOrdersLinkText('Order History');
+      }
+    } else if (!currentUser) {
+        // Reset if user logs out
+        setOrdersLinkHref('/orders/history');
+        setOrdersLinkText('Order History');
+    }
+  }, [isClient, currentUser]);
+
 
   const handleLogout = async () => {
     try {
       await signOutUser();
+      localStorage.removeItem('lastPlacedOrderId'); // Clear last order on logout
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
@@ -72,9 +99,8 @@ export default function Header() {
           
           {currentUser && (
             <Button variant="ghost" asChild size="sm" className="hidden sm:inline-flex">
-              {/* Using a mock order ID for now. This should be dynamic in a real app. */}
-              <Link href={`/orders/${currentUser.uid}-mockOrder`} className="flex items-center text-foreground hover:text-primary transition-colors">
-                <Package className="mr-1 h-5 w-5" /> Orders
+              <Link href={ordersLinkHref} className="flex items-center text-foreground hover:text-primary transition-colors">
+                <Package className="mr-1 h-5 w-5" /> {ordersLinkText}
               </Link>
             </Button>
           )}
@@ -111,7 +137,6 @@ export default function Header() {
           ) : currentUser ? (
             <>
               <Button variant="ghost" asChild size="sm" className="px-2 sm:px-3">
-                 {/* Profile link could go to a user profile page if it exists */}
                 <Link href="#" className="flex items-center text-foreground hover:text-primary transition-colors" onClick={(e) => e.preventDefault()} title={currentUser.email || "User Profile"}>
                    <Avatar className="h-6 w-6 sm:h-7 sm:w-7 mr-0 sm:mr-2">
                     {currentUser.photoURL ? (

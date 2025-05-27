@@ -5,28 +5,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import type { Order, CartItemType } from '@/types';
-import { PackageCheck, ShoppingBag, Truck, Home } from 'lucide-react';
+import { PackageCheck, ShoppingBag, Truck, Home, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
-// Mock order data - in a real app, this would be fetched
-const mockOrder: Order = {
-  id: 'ORD12345BEAUTY', // Updated ID for relevance
+// Fallback mock order data if not found in localStorage
+const fallbackMockOrder: Order = {
+  id: 'FALLBACK_ORD123',
   items: [
-    { id: '1', name: 'Radiant Glow Serum', description: 'A potent vitamin C serum to brighten and even out skin tone, leaving your skin with a radiant glow.', price: 45.00, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Skincare', quantity: 1 },
-    { id: '3', name: 'Crimson Kiss Lipstick', description: 'A luxurious, highly pigmented lipstick in our signature crimson shade with a satin finish.', price: 22.99, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Makeup', quantity: 2 },
+    { id: '1', name: 'Radiant Glow Serum (Fallback)', description: 'Fallback item description.', price: 45.00, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Skincare', quantity: 1 },
   ],
-  totalAmount: (45.00 * 1) + (22.99 * 2) + 50.00 + (((45.00 * 1) + (22.99 * 2)) * 0.1), // Price + Shipping + Tax
-  status: 'Shipped', // 'Pending', 'Processing', 'Shipped', 'Delivered'
+  totalAmount: 45.00 + 50.00 + (45.00 * 0.1),
+  status: 'Processing',
   shippingAddress: {
-    street: '123 Beauty Ave',
-    city: 'Glamville',
-    state: 'CA',
-    zipCode: '90210',
-    country: 'Cosmetica',
+    street: '123 Fallback St',
+    city: 'Mockville',
+    state: 'FB',
+    zipCode: '00000',
+    country: 'Mockland',
   },
-  createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-  trackingNumber: 'CRMSNBEAUTYTRK987',
+  createdAt: new Date().toISOString(),
+  trackingNumber: 'FALLBACKTRACK123',
 };
 
 const statusSteps = [
@@ -39,25 +40,84 @@ const statusSteps = [
 export default function OrderTrackingPage({ params }: { params: { orderId: string } }) {
   const [order, setOrder] = useState<Order | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching order details. params.orderId can be used here.
-    // For this example, we'll use the updated mockOrder
-    const orderToDisplay = {...mockOrder, id: params.orderId || mockOrder.id};
-    setOrder(orderToDisplay); 
+    if (params.orderId) {
+      const storedOrderData = localStorage.getItem(`orderDetails_${params.orderId}`);
+      if (storedOrderData) {
+        try {
+          setOrder(JSON.parse(storedOrderData));
+        } catch (e) {
+          console.error("Failed to parse order data from localStorage", e);
+          setError(`Invalid order data for ID: ${params.orderId}.`);
+          // setOrder(fallbackMockOrder); // Optionally set a fallback
+        }
+      } else {
+         // Attempt to find in static mock history if not in localStorage (for deep links to older mock orders)
+        const staticHistory = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('staticMockOrderHistory') || '[]') : [];
+        const historyOrder = staticHistory.find((histOrder: Order) => histOrder.id === params.orderId);
+        if (historyOrder) {
+          setOrder(historyOrder);
+        } else {
+          setError(`Order with ID: ${params.orderId} not found.`);
+          // setOrder(fallbackMockOrder); // Optionally set a fallback
+        }
+      }
+    } else {
+      setError("No order ID provided.");
+      // setOrder(fallbackMockOrder); // Optionally set a fallback
+    }
   }, [params.orderId]);
+  
+  useEffect(() => { // Save static mock history to localStorage once
+    if (typeof window !== "undefined" && !localStorage.getItem('staticMockOrderHistory')) {
+        const { mockOrderHistory } = require('@/lib/mock-data');
+        if(mockOrderHistory) {
+             localStorage.setItem('staticMockOrderHistory', JSON.stringify(mockOrderHistory));
+        }
+    }
+  }, [])
 
-  if (!isClient || !order) {
+
+  if (!isClient) {
     return <div className="text-center py-10">Loading order details...</div>;
   }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-12 text-center">
+        <Card className="w-full max-w-md mx-auto shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl text-destructive flex items-center justify-center">
+              <AlertCircle className="mr-2 h-7 w-7" /> Order Not Found
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button asChild>
+              <Link href="/orders/history">View Order History</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  if (!order) {
+     return <div className="text-center py-10">Loading order details...</div>;
+  }
+
 
   const currentStatusIndex = statusSteps.findIndex(step => step.name === order.status);
   const progressValue = statusSteps[currentStatusIndex]?.progress ?? 0;
   const shippingCost = 50.00; 
   const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const tax = subtotal * 0.1; // Example 10% tax
-
+  // Tax might be part of totalAmount already, or calculated separately.
+  // For simplicity, assume totalAmount includes tax and tip if applicable.
+  // If totalAmount doesn't include tax, it should be added.
+  // const tax = subtotal * 0.1; 
 
   return (
     <div className="container mx-auto py-12">
@@ -72,9 +132,9 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
             <h3 className="text-xl font-semibold mb-1">Status: <span className="text-primary">{order.status}</span></h3>
             <Progress value={progressValue} className="w-full h-3 mb-4" />
             <div className="flex justify-between text-xs text-muted-foreground">
-              {statusSteps.map((step) => (
-                <div key={step.name} className="flex flex-col items-center">
-                  <step.icon className={`h-6 w-6 mb-1 ${statusSteps.findIndex(s => s.name === step.name) <= currentStatusIndex ? 'text-primary' : 'text-muted-foreground'}`} />
+              {statusSteps.map((step, index) => (
+                <div key={step.name} className="flex flex-col items-center text-center w-1/4">
+                  <step.icon className={`h-6 w-6 mb-1 ${index <= currentStatusIndex ? 'text-primary' : 'text-muted-foreground'}`} />
                   <span>{step.name}</span>
                 </div>
               ))}
@@ -87,7 +147,7 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
             <h3 className="text-xl font-semibold mb-2">Items in this order</h3>
             <div className="space-y-4">
               {order.items.map((item: CartItemType) => (
-                <div key={item.id} className="flex items-center gap-4 p-2 border rounded-md">
+                <div key={item.id + item.name} className="flex items-center gap-4 p-2 border rounded-md">
                   <Image src={item.imageUrl} alt={item.name} width={64} height={64} className="rounded-md object-cover" data-ai-hint={`${item.category.toLowerCase()} product small`}/>
                   <div className="flex-grow">
                     <p className="font-medium">{item.name}</p>
@@ -115,7 +175,8 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
               <div className="text-sm space-y-1 p-3 border rounded-md bg-secondary/30">
                 <div className="flex justify-between"><span>Subtotal:</span> <span>NRS {subtotal.toFixed(2)}</span></div>
                 <div className="flex justify-between"><span>Shipping:</span> <span>NRS {shippingCost.toFixed(2)}</span></div>
-                 <div className="flex justify-between"><span>Tax (10%):</span> <span>NRS {tax.toFixed(2)}</span></div>
+                {/* Tip might be implicitly included in totalAmount if saved that way, or shown explicitly */}
+                {/* <div className="flex justify-between"><span>Tax (10%):</span> <span>NRS {tax.toFixed(2)}</span></div> */}
                 <Separator className="my-1"/>
                 <div className="flex justify-between font-bold text-base"><span>Total:</span> <span className="text-primary">NRS {order.totalAmount.toFixed(2)}</span></div>
               </div>
@@ -123,8 +184,11 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
           </div>
           
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex justify-between items-center">
           <p className="text-xs text-muted-foreground">Order placed on: {new Date(order.createdAt).toLocaleDateString()}</p>
+          <Button asChild variant="outline">
+            <Link href="/orders/history">Back to Order History</Link>
+          </Button>
         </CardFooter>
       </Card>
     </div>

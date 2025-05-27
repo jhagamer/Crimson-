@@ -1,5 +1,5 @@
 
-import type { Product } from '@/types';
+import type { Product, Order } from '@/types';
 
 export const mockProducts: Product[] = [
   {
@@ -55,5 +55,26 @@ export const mockProducts: Product[] = [
     imageUrl: 'https://placehold.co/600x400.png',
     stock: 40,
     category: 'Skincare',
+  },
+];
+
+export const mockOrderHistory: Order[] = [
+  { 
+    id: 'HIST_ORD001', 
+    status: 'Delivered', 
+    totalAmount: 120.50, 
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), 
+    items: [{...mockProducts[0], quantity: 1}, {...mockProducts[2], quantity: 1}],
+    shippingAddress: { street: '123 Old St', city: 'Pastville', state: 'OS', zipCode: '00001', country: 'Old Country'},
+    trackingNumber: 'TRACKHIST001'
+  },
+  { 
+    id: 'HIST_ORD002', 
+    status: 'Shipped', 
+    totalAmount: 75.00, 
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), 
+    items: [{...mockProducts[1], quantity: 2}],
+    shippingAddress: { street: '456 Past Ln', city: 'Memorytown', state: 'ML', zipCode: '00002', country: 'Old Country'},
+    trackingNumber: 'TRACKHIST002'
   },
 ];
