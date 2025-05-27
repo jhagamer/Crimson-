@@ -1,6 +1,14 @@
 
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User as FirebaseUser, signInWithEmailAndPassword } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  User as FirebaseUser, 
+  signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
+  createUserWithEmailAndPassword as firebaseCreateUserWithEmailAndPassword
+} from 'firebase/auth';
 
 // IMPORTANT:
 // For Firebase Authentication to work, especially with Google Sign-In:
@@ -25,12 +33,12 @@ const firebaseConfig = {
 
 // Define more explicit placeholder values to check against
 const placeholderValues = {
-  apiKey: "YOUR_ACTUAL_API_KEY_HERE", // More explicit placeholder
-  authDomain: "YOUR_ACTUAL_AUTH_DOMAIN_HERE", // More explicit placeholder
-  projectId: "YOUR_ACTUAL_PROJECT_ID_HERE", // More explicit placeholder
-  storageBucket: "YOUR_ACTUAL_STORAGE_BUCKET_HERE", // Optional for auth only
-  messagingSenderId: "YOUR_ACTUAL_MESSAGING_SENDER_ID_HERE", // Optional for auth only
-  appId: "YOUR_ACTUAL_APP_ID_HERE" // Optional for auth only
+  apiKey: "YOUR_ACTUAL_API_KEY_HERE", 
+  authDomain: "YOUR_ACTUAL_AUTH_DOMAIN_HERE",
+  projectId: "YOUR_ACTUAL_PROJECT_ID_HERE", 
+  storageBucket: "YOUR_ACTUAL_STORAGE_BUCKET_HERE", 
+  messagingSenderId: "YOUR_ACTUAL_MESSAGING_SENDER_ID_HERE",
+  appId: "YOUR_ACTUAL_APP_ID_HERE" 
 };
 
 let configError = false;
@@ -69,10 +77,11 @@ if (!getApps().length) {
 }
 
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider(); // Keep for potential future use or if other parts use it
+export const googleProvider = new GoogleAuthProvider();
 
-// signInWithEmailAndPassword is directly imported and used from 'firebase/auth' in login page.
-// No need for a separate wrapper here unless adding more logic.
+export const signInWithEmailAndPassword = firebaseSignInWithEmailAndPassword;
+export const signUpWithEmailAndPassword = firebaseCreateUserWithEmailAndPassword;
+
 
 export const signInWithGoogle = async (): Promise<FirebaseUser> => {
   try {
@@ -97,3 +106,4 @@ export const signOutUser = async (): Promise<void> => {
 };
 
 export type { FirebaseUser };
+
