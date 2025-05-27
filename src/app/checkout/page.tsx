@@ -11,7 +11,8 @@ import { useEffect, useState } from 'react';
 import type { CartItemType, Address } from '@/types';
 import { mockProducts } from '@/lib/mock-data';
 import { Label } from "@/components/ui/label";
-import { Input } from '@/components/ui/input'; // Added Input for tip
+import { Input } from '@/components/ui/input';
+import { MapPin } from 'lucide-react'; // Import an icon for the button
 
 export default function CheckoutPage() {
   const { toast } = useToast();
@@ -19,7 +20,7 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [tipAmount, setTipAmount] = useState<string>(''); // State for tip amount
+  const [tipAmount, setTipAmount] = useState<string>('');
 
   useEffect(() => {
     setIsClient(true);
@@ -51,13 +52,76 @@ export default function CheckoutPage() {
       title: 'Order Placed Successfully!',
       description: `Your order (including a tip of NRS ${parsedTip.toFixed(2)}) will be delivered soon. Please pay upon delivery.`,
     });
-    // Clear cart (mock) and redirect to home or an order confirmation page
-    // setCartItems([]); // If cart was global state, dispatch an action here
-    router.push('/'); // Redirect to home page for simplicity
+    router.push('/');
   };
 
+  const handleUpdateAddressWithLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support geolocation.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Fetching Location',
+      description: 'Please wait while we fetch your current location...',
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        toast({
+          title: 'Location Fetched (Mock)',
+          description: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}. In a real app, this would update your address.`,
+        });
+        console.log('Fetched location:', { latitude, longitude });
+        // Mock update of address for demonstration purposes
+        // You would typically use a geocoding API here to convert lat/lon to a full address
+        // For now, we can simulate setting a part of the address or just log it
+        setShippingAddress(prev => ({
+          ...(prev || { street: '', city: '', state: '', zipCode: '', country: '' }),
+          street: `Current Location (Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)})`,
+          city: 'Nearby City (Geocoded)',
+          country: 'Current Country (Geocoded)'
+        }));
+      },
+      (error) => {
+        let message = 'An error occurred while fetching your location.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = 'You denied the request for Geolocation.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            message = 'The request to get user location timed out.';
+            break;
+          default:
+            message = 'An unknown error occurred.';
+            break;
+        }
+        toast({
+          title: 'Location Error',
+          description: message,
+          variant: 'destructive',
+        });
+        console.error('Error getting location:', error);
+      },
+      {
+        enableHighAccuracy: true, // For precise location
+        timeout: 10000, // 10 seconds
+        maximumAge: 0, // Don't use a cached position
+      }
+    );
+  };
+
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shippingCost = 50.00; // Example shipping cost in NRS
+  const shippingCost = 50.00;
   const parsedTip = parseFloat(tipAmount) || 0;
   const total = subtotal + shippingCost + parsedTip;
 
@@ -80,15 +144,31 @@ export default function CheckoutPage() {
                 <p>{shippingAddress.street}</p>
                 <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}</p>
                 <p>{shippingAddress.country}</p>
-                <Button variant="link" asChild className="p-0 h-auto mt-1 text-primary">
-                  <Link href="/address">Change address</Link>
-                </Button>
+                <div className="mt-2 space-x-2">
+                  <Button variant="link" asChild className="p-0 h-auto text-primary text-xs">
+                    <Link href="/address">Edit Manually</Link>
+                  </Button>
+                  <Button
+                    variant="link"
+                    onClick={handleUpdateAddressWithLocation}
+                    className="p-0 h-auto text-primary text-xs"
+                  >
+                    <MapPin className="mr-1 h-3 w-3" /> Use Current Location
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="p-4 border border-dashed rounded-md text-center">
                 <p className="text-muted-foreground mb-2">No shipping address provided.</p>
+                 <Button
+                    variant="outline"
+                    onClick={handleUpdateAddressWithLocation}
+                    className="mb-2"
+                  >
+                    <MapPin className="mr-2 h-4 w-4" /> Use Current Location
+                  </Button>
                 <Button variant="outline" asChild>
-                  <Link href="/address">Add Shipping Address</Link>
+                  <Link href="/address">Add Shipping Address Manually</Link>
                 </Button>
               </div>
             )}
@@ -149,7 +229,7 @@ export default function CheckoutPage() {
 
         </CardContent>
         <CardFooter>
-          <Button onClick={handlePayment} className="w-full" disabled={!shippingAddress}>
+          <Button onClick={handlePayment} className="w-full" disabled={!shippingAddress && cartItems.length === 0}>
             Place Order
           </Button>
         </CardFooter>
@@ -157,3 +237,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
