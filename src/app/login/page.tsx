@@ -57,21 +57,24 @@ export default function LoginPage() {
         console.error('n8n webhook call failed:', webhookResponse.status, await webhookResponse.text());
         toast({
           title: 'OTP Service Issue (n8n)',
-          description: `Failed to trigger the OTP email via n8n webhook (${n8nWebhookUrl}). Your n8n workflow should handle email sending. Using fallback mock OTP for this prototype: ${MOCK_OTP}.`,
+          description: `Failed to trigger the OTP email via n8n webhook (${n8nWebhookUrl}). Status: ${webhookResponse.status}. Your n8n workflow should handle email sending. Using fallback mock OTP for this prototype: ${MOCK_OTP}.`,
           variant: "default", 
+          duration: 9000,
         });
       } else {
          toast({
           title: 'OTP Email Triggered (n8n)',
           description: `An OTP request for ${email} was sent to the n8n webhook (${n8nWebhookUrl}). Your n8n workflow should now send an email with the OTP. For this prototype, the mock OTP to enter is ${MOCK_OTP}.`,
+          duration: 9000,
         });
       }
     } catch (error) {
       console.error('Error calling n8n webhook:', error);
       toast({
-        title: 'OTP Service Error (n8n)',
-        description: `Could not reach the n8n webhook (${n8nWebhookUrl}) to send OTP email. Please check network and n8n service. Using fallback mock OTP for this prototype: ${MOCK_OTP}.`,
-        variant: "default",
+        title: 'Cannot Reach OTP Service (n8n)',
+        description: `Could not reach the n8n webhook at ${n8nWebhookUrl} to send OTP email. Please check your network connection and ensure the n8n service is running and accessible. Using fallback mock OTP for this prototype: ${MOCK_OTP}.`,
+        variant: "default", // Changed from destructive to default to be less alarming for a prototype fallback
+        duration: 9000,
       });
     }
     setAuthStep('otp');
@@ -96,6 +99,7 @@ export default function LoginPage() {
     }
 
     try {
+      // This uses the dummy password internally to create/sign-in to Firebase
       await signInOrUpWithOtpEmail(email); 
       toast({
         title: 'Login Successful!',
@@ -205,3 +209,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
