@@ -1,17 +1,11 @@
 
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut, 
-  User as FirebaseUser, 
-  signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
-  createUserWithEmailAndPassword as firebaseCreateUserWithEmailAndPassword
-} from 'firebase/auth';
+// Only import getAuth if you plan to use other Firebase services that might need it.
+// For Supabase auth, it's not directly needed here anymore.
+// import { getAuth } from 'firebase/auth';
 
 // IMPORTANT:
-// For Firebase Authentication to work:
+// For Firebase Authentication to work (if you were using it):
 // 1. Ensure your environment variables (e.g., in .env.local for development, 
 //    or your production environment's settings) have the CORRECT Firebase project credentials.
 // 2. In your Firebase Console (https://console.firebase.google.com/):
@@ -31,83 +25,61 @@ const firebaseConfig = {
 };
 
 let configError = false;
+const placeholderValues = [
+  "YOUR_FIREBASE_API_KEY",
+  "YOUR_FIREBASE_AUTH_DOMAIN",
+  "YOUR_FIREBASE_PROJECT_ID",
+  // Add other placeholders if necessary
+];
 
-// Basic check for missing essential configuration
-if (!firebaseConfig.apiKey) {
-  console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_API_KEY is missing or empty. Please set it in your environment and restart your server.");
+if (!firebaseConfig.apiKey || placeholderValues.includes(firebaseConfig.apiKey)) {
+  console.error(
+    `Firebase Config Error: NEXT_PUBLIC_FIREBASE_API_KEY is ${!firebaseConfig.apiKey ? "missing or empty" : "still set to a placeholder value"}. Please set it in your .env.local file and restart your server.`
+  );
   configError = true;
 }
-if (!firebaseConfig.authDomain) {
-  console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is missing or empty. Please set it in your environment and restart your server.");
+if (!firebaseConfig.authDomain || placeholderValues.includes(firebaseConfig.authDomain)) {
+  console.error(
+    `Firebase Config Error: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is ${!firebaseConfig.authDomain ? "missing or empty" : "still set to a placeholder value"}. Please set it in your .env.local file and restart your server.`
+  );
   configError = true;
 }
-if (!firebaseConfig.projectId) {
-  console.error("Firebase Config Error: NEXT_PUBLIC_FIREBASE_PROJECT_ID is missing or empty. Please set it in your environment and restart your server.");
+if (!firebaseConfig.projectId || placeholderValues.includes(firebaseConfig.projectId)) {
+  console.error(
+    `Firebase Config Error: NEXT_PUBLIC_FIREBASE_PROJECT_ID is ${!firebaseConfig.projectId ? "missing or empty" : "still set to a placeholder value"}. Please set it in your .env.local file and restart your server.`
+  );
   configError = true;
 }
-
 
 if (configError) {
   console.error("---");
-  console.error("CRITICAL: Firebase initialization might fail due to the configuration issues listed above.");
-  console.error("Please ensure all NEXT_PUBLIC_FIREBASE_ environment variables are correctly set.");
-  console.error("Also, check Firebase console: Email/Password sign-in must be enabled, and your app domain(s) must be in 'Authorized domains'.");
+  console.error(
+    "CRITICAL: Firebase initialization might fail due to configuration issues. Ensure all NEXT_PUBLIC_FIREBASE_ environment variables are correctly set."
+  );
+  console.error(
+    "Also, for Firebase Auth (if used): check Firebase console - Email/Password sign-in must be enabled, and your app domain(s) must be in 'Authorized domains'."
+  );
   console.error("---");
 }
 
 // Initialize Firebase
-let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+let app: FirebaseApp | null = null; // Allow app to be null if config is bad
+if (!configError && firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId) {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
 } else {
-  app = getApp();
+  console.warn("Firebase app was not initialized due to configuration errors. Some Firebase services may not be available.");
 }
 
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider(); 
+// export const auth = app ? getAuth(app) : null; // Export auth only if app is initialized. 
+// If you are fully moving to Supabase for auth, you might not need to export Firebase auth at all.
 
-// This dummy password is used ONLY for the OTP prototype flow to interact with Firebase Auth.
-// In a real production app, a secure passwordless mechanism (e.g., Firebase Custom Auth with a backend) would be used.
-const DUMMY_PASSWORD_FOR_OTP_PROTOTYPE = "prototypeOtpLoginPassword123!";
+// If you are NOT using any Firebase services other than Auth (which is now handled by Supabase),
+// you can significantly simplify or even remove this file, or parts of it related to Firebase Auth.
+// For now, it's left in case other Firebase services like Firestore or Storage are planned.
 
-export const signInOrUpWithOtpEmail = async (email: string): Promise<FirebaseUser> => {
-  if (configError) {
-    throw new Error("Firebase is not configured correctly. Check server logs.");
-  }
-  try {
-    // Try to sign in first
-    const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, DUMMY_PASSWORD_FOR_OTP_PROTOTYPE);
-    return userCredential.user;
-  } catch (error: any) {
-    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-      // If user not found or generic invalid credential (which can happen if password is wrong for an existing user,
-      // but for our dummy password flow, we assume it means new user or existing user with dummy pass), try to create a new user.
-      try {
-        const newUserCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, DUMMY_PASSWORD_for_OTP_PROTOTYPE);
-        return newUserCredential.user;
-      } catch (signUpError: any) {
-        console.error("Error creating user during OTP flow: ", signUpError);
-        // Provide a more user-friendly error or re-throw a generic one for production
-        throw new Error("Could not sign up or log in. Please try again."); 
-      }
-    } else {
-      console.error("Error signing in during OTP flow: ", error);
-      // Provide a more user-friendly error or re-throw a generic one for production
-      throw new Error("Login failed. Please try again.");
-    }
-  }
-};
-
-
-export const signOutUser = async (): Promise<void> => {
-  try {
-    await signOut(auth);
-  } catch (error) {
-    console.error("Error signing out: ", error);
-    throw error; // Or handle more gracefully
-  }
-};
-
-export type { FirebaseUser };
-// export const signInWithEmailAndPassword = firebaseSignInWithEmailAndPassword;
-// export const createUserWithEmailAndPassword = firebaseCreateUserWithEmailAndPassword;
+// No Firebase auth functions are exported here as Supabase is handling auth.
+// export type { FirebaseUser } from 'firebase/auth'; // Keep if other parts of your app expect this type.

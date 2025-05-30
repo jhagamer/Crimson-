@@ -6,7 +6,7 @@ import { ShoppingCart, User, Package, LogOut, Settings, Truck, Users, SprayCan, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
-import { signOutUser } from '@/lib/firebase';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -19,6 +19,7 @@ export default function Header() {
   const { toast } = useToast();
   const router = useRouter();
   
+  // Admin check based on email - for Supabase, you might use user_metadata or custom claims in production
   const isAdmin = currentUser?.email === 'admin@example.com' || currentUser?.email === 'shopcrimsonhouse@gmail.com';
   const isWorker = currentUser?.email === 'worker@example.com';
   
@@ -60,8 +61,13 @@ export default function Header() {
 
 
   const handleLogout = async () => {
+    if (!supabase) {
+      toast({ title: "Logout Failed", description: "Supabase client not initialized.", variant: "destructive" });
+      return;
+    }
     try {
-      await signOutUser();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       localStorage.removeItem('lastPlacedOrderId'); 
       toast({
         title: 'Logged Out',
@@ -181,12 +187,11 @@ export default function Header() {
               <Button variant="ghost" asChild size="sm" className="px-2">
                 <Link href="#" className="flex items-center text-foreground hover:text-primary transition-colors" onClick={(e) => e.preventDefault()} title={currentUser.email || "User Profile"}>
                    <Avatar className="h-7 w-7 mr-2">
-                    {currentUser.photoURL ? (
-                      <AvatarImage src={currentUser.photoURL} alt={currentUser.displayName || currentUser.email || 'User'} />
-                    ) : null}
+                    {/* Supabase users don't have photoURL by default, you might need to store it in metadata or a separate table */}
+                    {/* <AvatarImage src={currentUser.user_metadata?.avatar_url} alt={currentUser.email || 'User'} /> */}
                     <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm truncate max-w-[100px]">{currentUser.displayName || currentUser.email}</span>
+                  <span className="text-sm truncate max-w-[100px]">{currentUser.email}</span>
                 </Link>
               </Button>
               <Button variant="outline" onClick={handleLogout} title="Logout" className="flex items-center" size="sm">
