@@ -23,7 +23,7 @@ export default function LoginPage() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const MOCK_OTP = "123456"; 
-  const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook/Webhook';
+  const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook-test/Webhook';
 
 
   const resetFormFields = () => {
@@ -73,7 +73,7 @@ export default function LoginPage() {
       toast({
         title: 'Cannot Reach OTP Service (n8n)',
         description: `Could not reach the n8n webhook at ${n8nWebhookUrl} to send OTP email. Please check your network connection and ensure the n8n service is running and accessible. Using fallback mock OTP for this prototype: ${MOCK_OTP}.`,
-        variant: "default", // Changed from destructive to default to be less alarming for a prototype fallback
+        variant: "default",
         duration: 9000,
       });
     }
@@ -98,6 +98,13 @@ export default function LoginPage() {
       return;
     }
 
+    // If we reach here, the mock OTP entered by the user is correct.
+    toast({
+      title: 'Mock OTP Accepted',
+      description: 'Frontend OTP check passed. Now attempting Firebase login/signup...',
+      duration: 3000,
+    });
+
     try {
       // This uses the dummy password internally to create/sign-in to Firebase
       await signInOrUpWithOtpEmail(email); 
@@ -107,13 +114,16 @@ export default function LoginPage() {
       });
       router.push('/'); 
     } catch (error: any) {
-      console.error('OTP Login/Signup Error:', error);
-      let errorMessage = error.message || 'An error occurred. Please try again.';
-      if (error.code === 'auth/configuration-not-found' || error.code === 'auth/invalid-api-key') {
-          errorMessage = "Firebase authentication is not configured correctly. Please check Firebase console (Sign-in methods, Authorized domains) and ensure your API keys are correct in .env.local and the server restarted.";
+      console.error('OTP Login/Signup Error (Firebase):', error);
+      let errorMessage = error.message || 'An error occurred during Firebase login/signup. Please try again.';
+       // Check for specific Firebase errors if needed
+      if (error.code === 'auth/configuration-not-found') {
+        errorMessage = "Firebase: Error (auth/configuration-not-found). Please ensure Email/Password sign-in is enabled and your domain is authorized in the Firebase console.";
+      } else if (error.code === 'auth/invalid-api-key') {
+        errorMessage = "Firebase: Error (auth/invalid-api-key). Please check your Firebase project configuration and API key in .env.local.";
       }
       setAuthError(errorMessage);
-      toast({ title: 'Login Failed', description: errorMessage, variant: 'destructive' });
+      toast({ title: 'Firebase Login Failed', description: errorMessage, variant: 'destructive', duration: 9000 });
     }
     setIsLoading(false);
   };
@@ -136,7 +146,7 @@ export default function LoginPage() {
       </div>
       {authError && authStep === 'email' && <p className="text-sm text-destructive">{authError}</p>}
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Processing...' : 'Send OTP'}
+        {isLoading ? 'Processing...' : 'Send OTP Request'}
       </Button>
     </form>
   );
@@ -186,11 +196,11 @@ export default function LoginPage() {
             <LogIn className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-3xl font-bold text-primary">
-            Login / Sign Up
+            Login
           </CardTitle>
           <CardDescription>
             {authStep === 'email'
-              ? 'Enter your email. An OTP request will be sent via n8n (mocked for this prototype).'
+              ? 'Enter your email. An OTP request will be sent via n8n.'
               : `Enter the OTP. Your n8n workflow is responsible for sending the actual OTP. (Mock for prototype: ${MOCK_OTP}).`}
           </CardDescription>
         </CardHeader>
@@ -202,11 +212,10 @@ export default function LoginPage() {
             This prototype triggers an n8n webhook to simulate an OTP request. 
             The actual email sending logic should be in your n8n workflow. 
             A mock OTP is used for frontend verification.
-            Accounts are automatically created if they don't exist upon mock OTP verification using a dummy password.
+            Accounts are automatically created via Firebase if they don't exist upon mock OTP verification (using a hidden dummy password).
           </p>
         </CardFooter>
       </Card>
     </div>
   );
 }
-
