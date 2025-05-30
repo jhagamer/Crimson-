@@ -22,12 +22,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // IMPORTANT: This is a MOCK OTP for prototyping.
-  // In a real production application, OTPs must be securely generated,
-  // sent via a backend service (e.g., SMS/email), and verified on the server.
-  // Your n8n workflow is intended to handle the actual sending.
   const MOCK_OTP = "123456"; 
-  const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook-test/Webhook';
+  const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook/Webhook';
 
 
   const resetFormFields = () => {
@@ -49,7 +45,6 @@ export default function LoginPage() {
     }
 
     try {
-      // Attempt to call the n8n webhook to trigger sending an OTP email
       const webhookResponse = await fetch(n8nWebhookUrl, {
         method: 'POST',
         headers: {
@@ -62,7 +57,7 @@ export default function LoginPage() {
         console.error('n8n webhook call failed:', webhookResponse.status, await webhookResponse.text());
         toast({
           title: 'OTP Service Issue (n8n)',
-          description: `Failed to trigger the OTP email via n8n webhook (${n8nWebhookUrl}). Please check your n8n workflow. Using fallback mock OTP for this prototype: ${MOCK_OTP}.`,
+          description: `Failed to trigger the OTP email via n8n webhook (${n8nWebhookUrl}). Your n8n workflow should handle email sending. Using fallback mock OTP for this prototype: ${MOCK_OTP}.`,
           variant: "default", 
         });
       } else {
@@ -79,8 +74,6 @@ export default function LoginPage() {
         variant: "default",
       });
     }
-
-    // Regardless of webhook outcome (for prototype), proceed to OTP entry step with mock OTP
     setAuthStep('otp');
     setIsLoading(false);
   };
@@ -147,8 +140,9 @@ export default function LoginPage() {
   const renderOtpForm = () => (
      <form onSubmit={handleOtpSubmit} className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        An OTP request for <strong>{email}</strong> was triggered via n8n. 
-        Your n8n workflow should send the actual OTP. For this prototype, enter the mock OTP: <strong className="text-primary">{MOCK_OTP}</strong>.
+        An OTP request for <strong>{email}</strong> was triggered via n8n webhook. 
+        Your n8n workflow at ({n8nWebhookUrl}) is responsible for sending the actual OTP email. 
+        For this prototype, enter the mock OTP: <strong className="text-primary">{MOCK_OTP}</strong>.
       </p>
       <div>
         <Label htmlFor="otp" className="flex items-center mb-1">
@@ -188,7 +182,7 @@ export default function LoginPage() {
             <LogIn className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-3xl font-bold text-primary">
-            Login
+            Login / Sign Up
           </CardTitle>
           <CardDescription>
             {authStep === 'email'
