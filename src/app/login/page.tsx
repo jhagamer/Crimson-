@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { signInOrUpWithOtpEmail } from '@/lib/firebase';
+import { signInOrUpWithOtpEmail } from '@/lib/firebase'; // Using the combined function
 import { Mail, ShieldCheck, LogIn } from 'lucide-react';
 
 type AuthStep = 'email' | 'otp';
@@ -26,6 +26,8 @@ export default function LoginPage() {
   // In a real production application, OTPs must be securely generated,
   // sent via a backend service (e.g., SMS/email), and verified on the server.
   const MOCK_OTP = "123456"; 
+  const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook-test/Webhook';
+
 
   const resetFormFields = () => {
     // Email is kept for the OTP step
@@ -45,12 +47,40 @@ export default function LoginPage() {
       return;
     }
 
-    // Simulate OTP request
-    // In a real app, this would trigger a backend call to send an OTP.
-    toast({
-      title: 'OTP Sent (Mock)',
-      description: `For this prototype, an OTP (mock: ${MOCK_OTP}) has been 'sent' to ${email}. In production, this would be a real OTP.`,
-    });
+    try {
+      // Attempt to call the n8n webhook to simulate sending an OTP
+      const webhookResponse = await fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!webhookResponse.ok) {
+        console.error('n8n webhook call failed:', webhookResponse.status, await webhookResponse.text());
+        // Don't block login flow if webhook fails in prototype, just log and show mock OTP
+        toast({
+          title: 'OTP Service (Mock)',
+          description: `There was an issue contacting the OTP service (mock). Using fallback mock OTP. For this prototype, the mock OTP is ${MOCK_OTP}.`,
+          variant: "default", // Not destructive, as we have a fallback for prototype
+        });
+      } else {
+         toast({
+          title: 'OTP Sent (Simulated)',
+          description: `An OTP request for ${email} has been sent to the n8n webhook. For this prototype, the mock OTP is ${MOCK_OTP}.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error calling n8n webhook:', error);
+      toast({
+        title: 'OTP Service Error (Mock)',
+        description: `Could not reach the OTP service (mock). Using fallback mock OTP. For this prototype, the mock OTP is ${MOCK_OTP}.`,
+        variant: "default",
+      });
+    }
+
+    // Regardless of webhook outcome (for prototype), proceed to OTP entry step with mock OTP
     setAuthStep('otp');
     setIsLoading(false);
   };
@@ -83,6 +113,10 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error('OTP Login/Signup Error:', error);
       let errorMessage = error.message || 'An error occurred. Please try again.';
+      // More specific error for configuration issues
+      if (error.code === 'auth/configuration-not-found' || error.code === 'auth/invalid-api-key') {
+          errorMessage = "Firebase authentication is not configured correctly. Please check Firebase console (Sign-in methods, Authorized domains) and ensure your API keys are correct in .env.local and the server restarted.";
+      }
       setAuthError(errorMessage);
       toast({ title: 'Login Failed', description: errorMessage, variant: 'destructive' });
     }
@@ -116,7 +150,7 @@ export default function LoginPage() {
      <form onSubmit={handleOtpSubmit} className="space-y-4">
       <p className="text-sm text-muted-foreground">
         An OTP for this prototype (mock: <strong className="text-primary">{MOCK_OTP}</strong>) was 'sent' to <strong>{email}</strong>.
-        Enter it below.
+        Enter it below. In production, this would be a real OTP sent to your email.
       </p>
       <div>
         <Label htmlFor="otp" className="flex items-center mb-1">
@@ -169,8 +203,9 @@ export default function LoginPage() {
         </CardContent>
          <CardFooter className="flex-col items-center space-y-2">
            <p className="text-xs text-muted-foreground px-6 text-center">
-            This is a prototype using a mock OTP system. No actual emails are sent. 
-            Accounts are automatically created if they don't exist upon OTP verification using a dummy password.
+            This is a prototype using a mock OTP system. No actual emails are sent via this app directly. 
+            An n8n webhook is called to simulate an OTP request.
+            Accounts are automatically created if they don't exist upon mock OTP verification using a dummy password.
           </p>
         </CardFooter>
       </Card>
