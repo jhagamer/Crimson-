@@ -18,11 +18,11 @@ export default function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
 
   const themes = [
-    { value: 'crimson-light', label: 'Crimson Light (Default)' },
+    { value: 'crimson-light', label: 'Crimson Light' },
     { value: 'dark', label: 'Dark' },
     { value: 'theme-peach', label: 'Soft Peach' },
     { value: 'theme-lavender', label: 'Lavender Bliss' },
-    { value: 'theme-blush-pink', label: 'Blush Pink' },
+    { value: 'theme-blush-pink', label: 'Blush Pink (BeautyHub)' },
   ];
 
   return (

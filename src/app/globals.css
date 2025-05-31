@@ -103,25 +103,25 @@ body {
   }
 
   .theme-peach {
-    --background: 30 100% 96%;
-    --foreground: 25 30% 25%;
-    --card: 30 100% 97%;
+    --background: 30 100% 96%; /* Very light peach */
+    --foreground: 25 30% 25%; /* Dark, warm brown/gray */
+    --card: 30 100% 97%; /* Slightly off-white peach */
     --card-foreground: 25 30% 25%;
     --popover: 30 100% 97%;
     --popover-foreground: 25 30% 25%;
-    --primary: 28 85% 60%;
-    --primary-foreground: 20 50% 98%;
-    --secondary: 30 70% 90%;
-    --secondary-foreground: 25 30% 35%;
-    --muted: 30 70% 92%;
-    --muted-foreground: 25 30% 45%;
-    --accent: 35 75% 55%;
+    --primary: 28 85% 60%; /* Vibrant peach/coral */
+    --primary-foreground: 20 50% 98%; /* Very light, almost white */
+    --secondary: 30 70% 90%; /* Lighter peach */
+    --secondary-foreground: 25 30% 35%; /* Slightly lighter brown/gray */
+    --muted: 30 70% 92%; /* Muted peach */
+    --muted-foreground: 25 30% 45%; /* Medium brown/gray */
+    --accent: 35 75% 55%; /* Slightly deeper peach/orange accent */
     --accent-foreground: 20 50% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 30 60% 88%;
+    --border: 30 60% 88%; /* Soft peach border */
     --input: 30 60% 88%;
-    --ring: 28 85% 60%;
+    --ring: 28 85% 60%; /* Primary color for ring */
     /* Sidebar vars - inherit from :root or define explicitly */
     --sidebar-background: 30 100% 95%;
     --sidebar-foreground: 25 30% 30%;
@@ -134,25 +134,25 @@ body {
   }
 
   .theme-lavender {
-    --background: 270 70% 96%;
-    --foreground: 270 25% 20%;
-    --card: 270 70% 97%;
+    --background: 270 70% 96%; /* Very light lavender */
+    --foreground: 270 25% 20%; /* Dark cool gray/purple */
+    --card: 270 70% 97%; /* Slightly off-white lavender */
     --card-foreground: 270 25% 20%;
     --popover: 270 70% 97%;
     --popover-foreground: 270 25% 20%;
-    --primary: 265 75% 65%;
-    --primary-foreground: 270 60% 98%;
-    --secondary: 270 60% 90%;
-    --secondary-foreground: 270 25% 30%;
-    --muted: 270 60% 92%;
-    --muted-foreground: 270 25% 45%;
-    --accent: 275 60% 60%;
+    --primary: 265 75% 65%; /* Vibrant lavender/purple */
+    --primary-foreground: 270 60% 98%; /* Very light, almost white */
+    --secondary: 270 60% 90%; /* Lighter lavender */
+    --secondary-foreground: 270 25% 30%; /* Slightly lighter cool gray/purple */
+    --muted: 270 60% 92%; /* Muted lavender */
+    --muted-foreground: 270 25% 45%; /* Medium cool gray/purple */
+    --accent: 275 60% 60%; /* Slightly deeper purple accent */
     --accent-foreground: 270 60% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 270 50% 88%;
+    --border: 270 50% 88%; /* Soft lavender border */
     --input: 270 50% 88%;
-    --ring: 265 75% 65%;
+    --ring: 265 75% 65%; /* Primary color for ring */
     /* Sidebar vars */
     --sidebar-background: 270 70% 95%;
     --sidebar-foreground: 270 25% 25%;
@@ -164,35 +164,48 @@ body {
     --sidebar-ring: 265 75% 65%;
   }
 
-  .theme-blush-pink {
-    --background: 340 100% 96%;
-    --foreground: 340 30% 25%;
-    --card: 340 100% 97%;
-    --card-foreground: 340 30% 25%;
-    --popover: 340 100% 97%;
-    --popover-foreground: 340 30% 25%;
-    --primary: 335 80% 70%;
-    --primary-foreground: 340 50% 98%;
-    --secondary: 340 70% 92%;
-    --secondary-foreground: 340 30% 35%;
-    --muted: 340 70% 94%;
-    --muted-foreground: 340 30% 45%;
-    --accent: 345 70% 60%;
-    --accent-foreground: 340 50% 98%;
-    --destructive: 0 84.2% 60.2%;
+  .theme-blush-pink { /* Inspired by BeautyHub image */
+    --background: 340 100% 98%; /* Very light, almost white pink */
+    --foreground: 330 30% 25%; /* Dark, slightly desaturated pink/brown */
+    --card: 340 100% 99%; /* Off-white with a hint of pink */
+    --card-foreground: 330 30% 25%;
+    --popover: 340 100% 99%;
+    --popover-foreground: 330 30% 25%;
+    
+    --primary: 335 80% 65%; /* Main pink/rose color from buttons */
+    --primary-foreground: 0 0% 100%; /* White for text on primary */
+    
+    --secondary: 340 70% 95%; /* Lighter, softer pink */
+    --secondary-foreground: 330 30% 35%; /* Slightly lighter dark pink/brown */
+    
+    --muted: 340 70% 96%; /* Very muted pink */
+    --muted-foreground: 330 30% 45%; /* Medium dark pink/brown */
+    
+    --accent: 325 75% 60%; /* A slightly more purpleish pink for accents */
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 84.2% 60.2%; /* Standard destructive red */
     --destructive-foreground: 0 0% 98%;
-    --border: 340 60% 90%;
-    --input: 340 60% 90%;
-    --ring: 335 80% 70%;
+    
+    --border: 340 60% 92%; /* Soft pinkish border */
+    --input: 340 60% 92%;
+    --ring: 335 80% 65%; /* Primary color for focus rings */
+    
+    --radius: 0.75rem; /* Slightly more rounded corners */
+
     /* Sidebar vars */
-    --sidebar-background: 340 100% 95%;
-    --sidebar-foreground: 340 30% 30%;
-    --sidebar-primary: 335 80% 70%;
-    --sidebar-primary-foreground: 340 50% 98%;
-    --sidebar-accent: 345 70% 60%;
-    --sidebar-accent-foreground: 340 50% 98%;
-    --sidebar-border: 340 60% 88%;
-    --sidebar-ring: 335 80% 70%;
+    --sidebar-background: 340 100% 97%;
+    --sidebar-foreground: 330 30% 30%;
+    --sidebar-primary: 335 80% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 325 75% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 340 60% 90%;
+    --sidebar-ring: 335 80% 65%;
+
+    /* Gradient for buttons like "Add" in the image */
+    --gradient-primary-start: 335 85% 70%; /* Lighter pink */
+    --gradient-primary-end: 320 80% 60%;   /* Slightly more purplish pink */
   }
 }
 
@@ -202,5 +215,14 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .btn-primary-gradient {
+    @apply bg-gradient-to-r from-[hsl(var(--gradient-primary-start))] to-[hsl(var(--gradient-primary-end))] text-primary-foreground;
+  }
+  .btn-primary-gradient:hover {
+    @apply brightness-110;
   }
 }
