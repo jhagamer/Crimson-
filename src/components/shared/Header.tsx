@@ -20,7 +20,9 @@ export default function Header() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const isAdmin = currentUser?.email === 'admin@example.com' || currentUser?.email === 'shopcrimsonhouse@gmail.com';
+  const isAdmin = currentUser?.email === 'admin@example.com' || 
+                  currentUser?.email === 'shopcrimsonhouse@gmail.com' ||
+                  currentUser?.email === 'jhagamernp098@gmail.com';
   const isWorker = currentUser?.email === 'worker@example.com';
 
   let userRole: 'admin' | 'worker' | 'customer' | null = null;
@@ -276,3 +278,4 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+

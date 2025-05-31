@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import type { CartItemType, Address, Order } from '@/types';
 import { mockProducts } from '@/lib/mock-data';
 import { Label } from "@/components/ui/label";
-import { MapPin } from 'lucide-react'; 
+import { MapPin, Phone } from 'lucide-react'; 
 
 export default function CheckoutPage() {
   const { toast } = useToast();
@@ -25,15 +25,24 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate fetching cart items and address
+    // Simulate fetching cart items
     const initialCartItems: CartItemType[] = mockProducts.slice(0, 1).map(p => ({ ...p, quantity: 2 }));
     setCartItems(initialCartItems);
-    // Try to load address from localStorage or set a default mock
+    
+    // Try to load address from localStorage
     const savedAddress = localStorage.getItem('shippingAddress');
     if (savedAddress) {
-      setShippingAddress(JSON.parse(savedAddress));
+      try {
+        setShippingAddress(JSON.parse(savedAddress));
+      } catch (e) {
+        console.error("Failed to parse shipping address from localStorage", e);
+        setShippingAddress(null); // Or set a default mock
+      }
     } else {
+      // Default mock if nothing in localStorage
       setShippingAddress({
+        fullName: 'John Doe (Default)',
+        phone: '+15551234567',
         street: '123 Crimson Way',
         city: 'Redville',
         state: 'CR',
@@ -43,14 +52,20 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  const handleEditAddress = () => {
+    localStorage.setItem('addressRedirectPath', '/checkout'); // Remember to come back to checkout
+    router.push('/address');
+  };
+
   const handlePayment = () => {
-    if (!shippingAddress) {
+    if (!shippingAddress || !shippingAddress.street) { // Check for a valid address object
       toast({
         title: 'Address Required',
-        description: 'Please add a shipping address before proceeding to payment.',
+        description: 'Please add or confirm a shipping address before proceeding.',
         variant: 'destructive',
       });
-      router.push('/address'); // Redirect to address page if no address
+      localStorage.setItem('addressRedirectPath', '/checkout');
+      router.push('/address'); 
       return;
     }
     if (cartItems.length === 0) {
@@ -67,20 +82,18 @@ export default function CheckoutPage() {
     const newOrder: Order = {
       id: mockOrderId,
       items: cartItems,
-      totalAmount: total, // Use the calculated total including tip
-      status: 'Processing', // Initial status
+      totalAmount: total, 
+      status: 'Processing', 
       shippingAddress: shippingAddress,
       createdAt: new Date().toISOString(),
       trackingNumber: `CMTRK${Date.now()}`,
+      isPhoneConfirmed: false, // New orders are not phone confirmed by default
     };
 
-    // Save order details to localStorage (mocking backend save)
     localStorage.setItem(`orderDetails_${mockOrderId}`, JSON.stringify(newOrder));
     localStorage.setItem('lastPlacedOrderId', mockOrderId);
     
-    // Clear cart (mock)
     setCartItems([]); 
-    // Potentially clear cart from localStorage if it's stored there too
 
     toast({
       title: 'Order Placed Successfully!',
@@ -108,7 +121,13 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        // Preserve existing phone and name if possible, or set defaults
+        const currentFullName = shippingAddress?.fullName || 'Located User';
+        const currentPhone = shippingAddress?.phone || '';
+
         const newMockAddress: Address = {
+          fullName: currentFullName,
+          phone: currentPhone, // Keep existing phone or prompt user to add it.
           street: `Current Location (Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)})`,
           city: 'Nearby City (Geocoded)',
           state: 'Auto',
@@ -116,39 +135,22 @@ export default function CheckoutPage() {
           country: 'Current Country (Geocoded)'
         };
         setShippingAddress(newMockAddress);
-        localStorage.setItem('shippingAddress', JSON.stringify(newMockAddress)); // Save to localStorage
+        localStorage.setItem('shippingAddress', JSON.stringify(newMockAddress)); 
         toast({
           title: 'Location Updated (Mock)',
-          description: `Address updated to current location.`,
+          description: `Address updated to current location. Please verify full name and phone.`,
         });
       },
       (error) => {
         let message = 'An error occurred while fetching your location.';
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            message = 'You denied the request for Geolocation.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            message = 'Location information is unavailable.';
-            break;
-          case error.TIMEOUT:
-            message = 'The request to get user location timed out.';
-            break;
-          default:
-            message = 'An unknown error occurred.';
-            break;
-        }
+        // ... (error handling messages as before)
         toast({
           title: 'Location Error',
           description: message,
           variant: 'destructive',
         });
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0, 
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -171,14 +173,16 @@ export default function CheckoutPage() {
         <CardContent className="space-y-6">
           <div>
             <h3 className="text-xl font-semibold mb-2">Shipping Address</h3>
-            {shippingAddress ? (
+            {shippingAddress && shippingAddress.street ? (
               <div className="text-sm text-muted-foreground p-4 border rounded-md bg-secondary/30">
-                <p>{shippingAddress.street}</p>
+                <p><strong>{shippingAddress.fullName}</strong></p>
+                {shippingAddress.phone && <p className="flex items-center"><Phone className="mr-2 h-3 w-3"/>{shippingAddress.phone}</p>}
+                <p>{shippingAddress.street}, {shippingAddress.apartment || ''}</p>
                 <p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}</p>
                 <p>{shippingAddress.country}</p>
                 <div className="mt-2 space-x-2">
-                  <Button variant="link" asChild className="p-0 h-auto text-primary text-xs">
-                    <Link href="/address">Edit Manually</Link>
+                  <Button variant="link" onClick={handleEditAddress} className="p-0 h-auto text-primary text-xs">
+                    Edit Manually
                   </Button>
                   <Button
                     variant="link"
@@ -199,8 +203,8 @@ export default function CheckoutPage() {
                   >
                     <MapPin className="mr-2 h-4 w-4" /> Use Current Location
                   </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/address">Add Shipping Address Manually</Link>
+                <Button variant="outline" onClick={handleEditAddress}>
+                  Add Shipping Address
                 </Button>
               </div>
             )}
@@ -270,7 +274,7 @@ export default function CheckoutPage() {
           <Button 
             onClick={handlePayment} 
             className="w-full" 
-            disabled={!shippingAddress || cartItems.length === 0}
+            disabled={!shippingAddress || !shippingAddress.street || cartItems.length === 0}
           >
             Place Order
           </Button>

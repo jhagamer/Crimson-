@@ -26,14 +26,18 @@ export interface Order {
   shippingAddress: Address;
   createdAt: string;
   trackingNumber?: string;
+  isPhoneConfirmed?: boolean;
 }
 
 export interface Address {
+  fullName?: string; // Added from address page
+  phone?: string; // New field for phone number
   street: string;
   city: string;
   state: string;
   zipCode: string;
   country: string;
+  apartment?: string; // Added from address page
 }
 
 export interface User {
@@ -51,3 +55,4 @@ export interface Category {
   dataAiHint: string;
   bgColorClass?: string; // For styling category cards like in the image
 }
+

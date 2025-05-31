@@ -1,5 +1,16 @@
 
-import type { Product, Order, Category } from '@/types';
+import type { Product, Order, Category, Address } from '@/types';
+
+const defaultMockAddress: Address = {
+  fullName: 'Mock User',
+  phone: '+11234567890',
+  street: '123 Mockingbird Lane',
+  city: 'Mockville',
+  state: 'MS',
+  zipCode: '12345',
+  country: 'Mockland',
+  apartment: 'Apt 1'
+};
 
 export const mockProducts: Product[] = [
   {
@@ -114,8 +125,9 @@ export const mockOrderHistory: Order[] = [
     totalAmount: mockProducts[0].price + mockProducts[2].price + 50,
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     items: [{...mockProducts[0], quantity: 1}, {...mockProducts[2], quantity: 1}],
-    shippingAddress: { street: '123 Old St', city: 'Pastville', state: 'OS', zipCode: '00001', country: 'Old Country'},
-    trackingNumber: 'TRACKHIST001'
+    shippingAddress: { ...defaultMockAddress, street: '123 Old St', city: 'Pastville', fullName: 'Historic User', phone: '+1000000001'},
+    trackingNumber: 'TRACKHIST001',
+    isPhoneConfirmed: true,
   },
   {
     id: 'HIST_ORD002',
@@ -123,8 +135,9 @@ export const mockOrderHistory: Order[] = [
     totalAmount: mockProducts[1].price * 2 + 50,
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     items: [{...mockProducts[1], quantity: 2}],
-    shippingAddress: { street: '456 Past Ln', city: 'Memorytown', state: 'ML', zipCode: '00002', country: 'Old Country'},
-    trackingNumber: 'TRACKHIST002'
+    shippingAddress: { ...defaultMockAddress, street: '456 Past Ln', city: 'Memorytown', fullName: 'Recent User', phone: '+1000000002'},
+    trackingNumber: 'TRACKHIST002',
+    isPhoneConfirmed: false,
   },
 ];
 

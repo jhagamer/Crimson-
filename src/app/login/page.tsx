@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { supabase, type SupabaseUser } from '@/lib/supabaseClient';
 import { Mail, LogIn } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 // Helper component for Google Icon
 const GoogleIcon = () => (
@@ -32,7 +32,33 @@ export default function LoginPage() {
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook-test/Webhook';
+  const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook-test/Webhook'; // Test URL
+  const adminEmailForRedirect = 'jhagamernp098@gmail.com';
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          toast({
+            title: 'Login Successful',
+            description: `Welcome back, ${session.user.email}!`,
+          });
+          if (session.user.email === adminEmailForRedirect) {
+            router.push('/admin/products');
+          } else {
+            router.push('/'); // Redirect to home for other users
+          }
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [router, toast]);
+
 
   const handleMagicLinkLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,27 +80,39 @@ export default function LoginPage() {
     }
 
     try {
-      // Attempt to call the n8n webhook
+      // Attempt to call the n8n webhook (optional, for side-effects like notifications)
       try {
         const n8nResponse = await fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, source: 'MagicLinkLoginAttempt' }),
         });
         if (!n8nResponse.ok) {
           console.warn('n8n webhook call failed or returned an error status:', n8nResponse.status);
           // Potentially show a non-critical toast, but proceed with Supabase OTP
+           toast({
+            title: "Webhook Info",
+            description: `Could not reach n8n webhook at ${n8nWebhookUrl}. Proceeding with Supabase.`,
+            variant: "default",
+            duration: 7000,
+          });
         }
       } catch (n8nError) {
         console.warn('Could not reach n8n webhook:', n8nError);
-        // Potentially show a non-critical toast, but proceed with Supabase OTP
+         toast({
+            title: "Webhook Unreachable",
+            description: `The n8n webhook (${n8nWebhookUrl}) was unreachable. Error: ${n8nError instanceof Error ? n8nError.message : String(n8nError)}. Proceeding with Supabase.`,
+            variant: "default",
+            duration: 9000,
+          });
       }
 
+      // Supabase Magic Link
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/`, // Redirect to home page after login
+          emailRedirectTo: window.location.origin, // Supabase will handle redirect after link click
         },
       });
 
@@ -84,16 +122,16 @@ export default function LoginPage() {
 
       toast({
         title: 'Check your email!',
-        description: `A magic link has been sent to ${email}. Click the link to log in. This link was sent by Supabase.`,
+        description: `A magic link has been sent to ${email} by Supabase. Click the link to log in.`,
         duration: 9000,
       });
-      setEmail('');
+      setEmail(''); // Clear email field after successful request
 
     } catch (error: any) {
       console.error('Supabase Magic Link Error:', error);
-      const errorMessage = error.message || 'An error occurred during login. Please try again.';
+      const errorMessage = error.message || 'An error occurred during magic link login. Please try again.';
       setAuthError(errorMessage);
-      toast({ title: 'Login Failed', description: errorMessage, variant: 'destructive', duration: 9000 });
+      toast({ title: 'Magic Link Failed', description: errorMessage, variant: 'destructive', duration: 9000 });
     }
     setIsLoading(false);
   };
@@ -108,10 +146,22 @@ export default function LoginPage() {
       return;
     }
 
+    try {
+        // N8N Webhook for Google Login attempt (optional)
+        await fetch(n8nWebhookUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ source: 'GoogleLoginAttempt', timestamp: new Date().toISOString() })
+        });
+    } catch (n8nError) {
+        console.warn('N8N webhook call for Google login failed:', n8nError);
+    }
+
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`, // Redirect to home page after successful Google login
+        redirectTo: window.location.origin, // Supabase handles redirect
       },
     });
 
@@ -119,10 +169,9 @@ export default function LoginPage() {
       console.error('Supabase Google OAuth Error:', error);
       setAuthError(error.message || 'An error occurred during Google login.');
       toast({ title: 'Google Login Failed', description: error.message, variant: 'destructive' });
-      setIsLoadingGoogle(false);
+      setIsLoadingGoogle(false); // Only set to false if there's an immediate error. Otherwise, redirect handles it.
     }
-    // If no error, Supabase handles the redirect to Google and then back to your app.
-    // isLoadingGoogle will remain true until the page reloads or navigates away.
+    // If no error, Supabase redirects. isLoadingGoogle remains true until page reloads or navigates.
   };
 
 

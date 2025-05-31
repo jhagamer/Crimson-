@@ -1,25 +1,65 @@
+
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import type { Address } from '@/types';
 
 export default function AddressPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const [currentAddress, setCurrentAddress] = useState<Partial<Address>>({
+    fullName: '',
+    phone: '',
+    street: '',
+    apartment: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: ''
+  });
+
+  useEffect(() => {
+    const savedAddress = localStorage.getItem('shippingAddress');
+    if (savedAddress) {
+      try {
+        setCurrentAddress(JSON.parse(savedAddress));
+      } catch (e) {
+        console.error("Failed to parse saved address:", e);
+      }
+    }
+  }, []);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = event.target;
+    setCurrentAddress(prev => ({ ...prev, [id]: value }));
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Mock address save logic
-    console.log('Address save attempt');
+    // Basic validation
+    if (!currentAddress.street || !currentAddress.city || !currentAddress.state || !currentAddress.zipCode || !currentAddress.country || !currentAddress.fullName || !currentAddress.phone) {
+        toast({
+            title: 'Missing Information',
+            description: 'Please fill out all required address fields, including full name and phone number.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    localStorage.setItem('shippingAddress', JSON.stringify(currentAddress));
     toast({
-      title: 'Address Saved (Mock)',
+      title: 'Address Saved',
       description: 'Your shipping address has been updated.',
     });
-    router.push('/checkout'); // Redirect to checkout or profile page
+    // Redirect to checkout or profile page, or wherever appropriate
+    const redirectPath = localStorage.getItem('addressRedirectPath') || '/checkout';
+    localStorage.removeItem('addressRedirectPath'); // Clean up
+    router.push(redirectPath);
   };
 
   return (
@@ -34,38 +74,38 @@ export default function AddressPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" placeholder="John Doe" required />
+                <Input id="fullName" placeholder="John Doe" value={currentAddress.fullName || ''} onChange={handleChange} required />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" placeholder="(123) 456-7890" type="tel" required/>
+                <Input id="phone" placeholder="+1 (555) 123-4567" type="tel" value={currentAddress.phone || ''} onChange={handleChange} required/>
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="street">Street Address</Label>
-              <Input id="street" placeholder="123 Crimson Lane" required />
+              <Input id="street" placeholder="123 Crimson Lane" value={currentAddress.street || ''} onChange={handleChange} required />
             </div>
              <div className="space-y-2">
               <Label htmlFor="apartment">Apartment, suite, etc. (optional)</Label>
-              <Input id="apartment" placeholder="Apt 4B" />
+              <Input id="apartment" placeholder="Apt 4B" value={currentAddress.apartment || ''} onChange={handleChange} />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" placeholder="New York" required />
+                <Input id="city" placeholder="New York" value={currentAddress.city || ''} onChange={handleChange} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="state">State / Province</Label>
-                <Input id="state" placeholder="NY" required />
+                <Input id="state" placeholder="NY" value={currentAddress.state || ''} onChange={handleChange} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="zipCode">ZIP / Postal Code</Label>
-                <Input id="zipCode" placeholder="10001" required />
+                <Input id="zipCode" placeholder="10001" value={currentAddress.zipCode || ''} onChange={handleChange} required />
               </div>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="country">Country</Label>
-                <Input id="country" placeholder="United States" required />
+                <Input id="country" placeholder="United States" value={currentAddress.country || ''} onChange={handleChange} required />
             </div>
             <Button type="submit" className="w-full">
               Save Address
