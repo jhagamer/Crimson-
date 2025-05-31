@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -6,11 +7,11 @@ export interface Product {
   imageUrl: string;
   stock: number;
   category: string;
-  brand?: string; // New: Product brand or maker
-  tag?: string; // New: e.g., "Best Seller", "New", "Save X NRS"
-  originalPrice?: number; // New: For displaying a strikethrough price
-  rating?: number; // New: Average star rating (e.g., 4.5)
-  reviewCount?: number; // New: Number of reviews
+  brand?: string;
+  tag?: string;
+  originalPrice?: number;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export interface CartItemType extends Product {
@@ -23,7 +24,7 @@ export interface Order {
   totalAmount: number;
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippingAddress: Address;
-  createdAt: string; 
+  createdAt: string;
   trackingNumber?: string;
 }
 
@@ -40,4 +41,13 @@ export interface User {
   email: string;
   role: 'customer' | 'admin' | 'delivery';
   address?: Address;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  imageUrl: string;
+  link: string;
+  dataAiHint: string;
+  bgColorClass?: string; // For styling category cards like in the image
 }

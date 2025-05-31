@@ -1,5 +1,5 @@
 
-import type { Product, Order } from '@/types';
+import type { Product, Order, Category } from '@/types';
 
 export const mockProducts: Product[] = [
   {
@@ -108,22 +108,65 @@ export const mockProducts: Product[] = [
 ];
 
 export const mockOrderHistory: Order[] = [
-  { 
-    id: 'HIST_ORD001', 
-    status: 'Delivered', 
-    totalAmount: mockProducts[0].price + mockProducts[2].price + 50, 
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), 
+  {
+    id: 'HIST_ORD001',
+    status: 'Delivered',
+    totalAmount: mockProducts[0].price + mockProducts[2].price + 50,
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     items: [{...mockProducts[0], quantity: 1}, {...mockProducts[2], quantity: 1}],
     shippingAddress: { street: '123 Old St', city: 'Pastville', state: 'OS', zipCode: '00001', country: 'Old Country'},
     trackingNumber: 'TRACKHIST001'
   },
-  { 
-    id: 'HIST_ORD002', 
-    status: 'Shipped', 
-    totalAmount: mockProducts[1].price * 2 + 50, 
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), 
+  {
+    id: 'HIST_ORD002',
+    status: 'Shipped',
+    totalAmount: mockProducts[1].price * 2 + 50,
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     items: [{...mockProducts[1], quantity: 2}],
     shippingAddress: { street: '456 Past Ln', city: 'Memorytown', state: 'ML', zipCode: '00002', country: 'Old Country'},
     trackingNumber: 'TRACKHIST002'
+  },
+];
+
+export const mockCategories: Category[] = [
+  {
+    id: 'cat1',
+    name: 'Skincare',
+    imageUrl: 'https://placehold.co/300x300.png/FFC0CB/333333', // Pinkish background
+    link: '/search?category=skincare',
+    dataAiHint: 'skincare products',
+    bgColorClass: 'bg-pink-200/50',
+  },
+  {
+    id: 'cat2',
+    name: 'Makeup',
+    imageUrl: 'https://placehold.co/300x300.png/E6E6FA/333333', // Lavenderish background
+    link: '/search?category=makeup',
+    dataAiHint: 'makeup items',
+    bgColorClass: 'bg-purple-200/50',
+  },
+  {
+    id: 'cat3',
+    name: 'Fragrance',
+    imageUrl: 'https://placehold.co/300x300.png/FFB6C1/333333', // LightPink background
+    link: '/search?category=fragrance',
+    dataAiHint: 'perfume bottle',
+    bgColorClass: 'bg-rose-200/50',
+  },
+  {
+    id: 'cat4',
+    name: 'Hair Care',
+    imageUrl: 'https://placehold.co/300x300.png/D8BFD8/333333', // Thistle background
+    link: '/search?category=haircare',
+    dataAiHint: 'haircare products',
+    bgColorClass: 'bg-fuchsia-200/50',
+  },
+   {
+    id: 'cat5',
+    name: 'Body Care',
+    imageUrl: 'https://placehold.co/300x300.png/FFE4E1/333333', // MistyRose background
+    link: '/search?category=bodycare',
+    dataAiHint: 'body lotion spa',
+    bgColorClass: 'bg-pink-100/50',
   },
 ];

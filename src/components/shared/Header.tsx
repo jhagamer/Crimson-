@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Package, LogOut, Settings, Truck, Users, SprayCan, Search } from 'lucide-react';
+import { ShoppingCart, User, Package, LogOut, Settings, Truck, Users, Search, Menu, Bell, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,17 +12,17 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import ThemeSwitcher from './ThemeSwitcher';
 import { useEffect, useState, type FormEvent } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 
 export default function Header() {
   const { currentUser, loading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  
-  // Admin check based on email - for Supabase, you might use user_metadata or custom claims in production
+
   const isAdmin = currentUser?.email === 'admin@example.com' || currentUser?.email === 'shopcrimsonhouse@gmail.com';
   const isWorker = currentUser?.email === 'worker@example.com';
-  
+
   let userRole: 'admin' | 'worker' | 'customer' | null = null;
   if (currentUser) {
     if (isAdmin) {
@@ -68,12 +68,12 @@ export default function Header() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      localStorage.removeItem('lastPlacedOrderId'); 
+      localStorage.removeItem('lastPlacedOrderId');
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
-      router.push('/login'); 
+      router.push('/login');
     } catch (error: any) {
       toast({
         title: 'Logout Failed',
@@ -84,7 +84,7 @@ export default function Header() {
   };
 
   const getInitials = (email?: string | null) => {
-    if (!email) return '';
+    if (!email) return 'U';
     return email.charAt(0).toUpperCase();
   }
 
@@ -95,118 +95,184 @@ export default function Header() {
     }
   };
 
+  // Placeholder for hamburger menu functionality
+  const handleMenuToggle = () => {
+    console.log("Hamburger menu toggled");
+    toast({title: "Menu", description: "Mobile menu would open here."});
+  }
+
   return (
-    <header className="bg-card border-b border-border shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center">
-        <div className="flex justify-between items-center w-full sm:w-auto mb-2 sm:mb-0">
-          <Link href="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors flex items-center">
-            <SprayCan className="mr-2 h-7 w-7" /> Crimson Cosmetics
+    <header className="bg-card border-b border-border shadow-sm sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Left Section: Hamburger and Title */}
+        <div className="flex items-center space-x-3">
+          <Button variant="ghost" size="icon" onClick={handleMenuToggle} aria-label="Open menu">
+            <Menu className="h-6 w-6" />
+          </Button>
+          <Link href="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
+            BeautyHub
           </Link>
-          <div className="sm:hidden flex items-center">
-            <ThemeSwitcher />
-            {loading ? (
-              <Button variant="outline" size="icon" disabled className="ml-2">
-                <User className="h-5 w-5 animate-pulse" />
-              </Button>
-            ) : currentUser ? (
-               <Button variant="outline" onClick={handleLogout} title="Logout" className="ml-2 flex items-center" size="icon">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            ) : (
-              <Button variant="default" asChild size="icon" className="ml-2">
-                <Link href="/login">
-                   <User className="h-5 w-5" />
-                </Link>
-              </Button>
-            )}
-          </div>
         </div>
 
-        <form onSubmit={handleSearchSubmit} className="w-full sm:w-auto sm:max-w-xs order-last sm:order-none mt-2 sm:mt-0">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="pl-8 w-full h-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
+        {/* Center Section: Search Bar (visible on md and up) */}
+        <div className="hidden md:flex flex-grow max-w-md mx-4">
+          <form onSubmit={handleSearchSubmit} className="w-full">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search for products, brands..."
+                className="pl-10 w-full h-10 rounded-lg bg-background theme-blush-pink:bg-pink-50/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </form>
+        </div>
 
-        <nav className="hidden sm:flex items-center space-x-1">
-          <Button variant="ghost" asChild className="text-sm">
-            <Link href="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
-          </Button>
-          <Button variant="ghost" asChild size="sm">
-            <Link href="/cart" className="flex items-center text-foreground hover:text-primary transition-colors">
-              <ShoppingCart className="mr-1 h-5 w-5" /> Cart
+        {/* Right Section: Icons and Auth */}
+        <nav className="flex items-center space-x-2">
+          <ThemeSwitcher />
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="#" aria-label="Notifications">
+              <Bell className="h-5 w-5" />
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full">1</Badge>
             </Link>
           </Button>
-          
-          {currentUser && (
-            <Button variant="ghost" asChild size="sm">
-              <Link href={ordersLinkHref} className="flex items-center text-foreground hover:text-primary transition-colors">
-                <Package className="mr-1 h-5 w-5" /> {ordersLinkText}
-              </Link>
-            </Button>
-          )}
-
-          {userRole === 'admin' && (
-            <>
-              <Button variant="ghost" asChild size="sm">
-                <Link href="/admin/products" className="flex items-center text-foreground hover:text-primary transition-colors">
-                  <Settings className="mr-1 h-5 w-5" /> Products
-                </Link>
-              </Button>
-              <Button variant="ghost" asChild size="sm">
-                <Link href="/admin/workers" className="flex items-center text-foreground hover:text-primary transition-colors">
-                  <Users className="mr-1 h-5 w-5" /> Workers
-                </Link>
-              </Button>
-            </>
-          )}
-
-          {userRole === 'worker' && (
-            <Button variant="ghost" asChild size="sm">
-              <Link href="/delivery/dashboard" className="flex items-center text-foreground hover:text-primary transition-colors">
-                <Truck className="mr-1 h-5 w-5" /> Delivery Panel
-              </Link>
-            </Button>
-          )}
-          
-          <ThemeSwitcher />
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="#" aria-label="Wishlist">
+              <Heart className="h-5 w-5" />
+               {/* <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full">3</Badge> */}
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="/cart" aria-label="Shopping Cart">
+              <ShoppingCart className="h-5 w-5" />
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full">2</Badge>
+            </Link>
+          </Button>
 
           {loading ? (
-            <Button variant="outline" size="sm" disabled className="px-2">
-              <User className="h-5 w-5 animate-pulse" />
+            <Button variant="ghost" size="icon" disabled className="px-2">
+              <User className="h-6 w-6 animate-pulse" />
             </Button>
           ) : currentUser ? (
             <>
-              <Button variant="ghost" asChild size="sm" className="px-2">
-                <Link href="#" className="flex items-center text-foreground hover:text-primary transition-colors" onClick={(e) => e.preventDefault()} title={currentUser.email || "User Profile"}>
-                   <Avatar className="h-7 w-7 mr-2">
-                    {/* Supabase users don't have photoURL by default, you might need to store it in metadata or a separate table */}
-                    {/* <AvatarImage src={currentUser.user_metadata?.avatar_url} alt={currentUser.email || 'User'} /> */}
-                    <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm truncate max-w-[100px]">{currentUser.email}</span>
+            {/* Hidden on small screens where it might be in a drawer menu */}
+             <div className="hidden sm:flex items-center space-x-1">
+                <Button variant="ghost" asChild size="sm">
+                <Link href={ordersLinkHref} className="flex items-center text-foreground hover:text-primary transition-colors">
+                    <Package className="mr-1 h-5 w-5" /> {ordersLinkText}
                 </Link>
-              </Button>
-              <Button variant="outline" onClick={handleLogout} title="Logout" className="flex items-center" size="sm">
-                <LogOut className="mr-1 h-5 w-5" /> Logout
-              </Button>
+                </Button>
+                {userRole === 'admin' && (
+                    <>
+                    <Button variant="ghost" asChild size="sm">
+                        <Link href="/admin/products" className="flex items-center text-foreground hover:text-primary transition-colors">
+                        <Settings className="mr-1 h-5 w-5" /> Products
+                        </Link>
+                    </Button>
+                    <Button variant="ghost" asChild size="sm">
+                        <Link href="/admin/workers" className="flex items-center text-foreground hover:text-primary transition-colors">
+                        <Users className="mr-1 h-5 w-5" /> Workers
+                        </Link>
+                    </Button>
+                    </>
+                )}
+                {userRole === 'worker' && (
+                    <Button variant="ghost" asChild size="sm">
+                    <Link href="/delivery/dashboard" className="flex items-center text-foreground hover:text-primary transition-colors">
+                        <Truck className="mr-1 h-5 w-5" /> Delivery
+                    </Link>
+                    </Button>
+                )}
+             </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                     <Avatar className="h-8 w-8">
+                        <AvatarImage src={currentUser.user_metadata?.avatar_url || `https://placehold.co/40x40.png/E0C0E0/333333?text=${getInitials(currentUser.email)}`} alt={currentUser.email || 'User'} />
+                        <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{currentUser.email}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem asChild className="sm:hidden">
+                        <Link href={ordersLinkHref}><Package className="mr-2 h-4 w-4" />{ordersLinkText}</Link>
+                    </DropdownMenuItem>
+                    {userRole === 'admin' && (
+                        <>
+                        <DropdownMenuItem asChild className="sm:hidden">
+                           <Link href="/admin/products"><Settings className="mr-2 h-4 w-4" /> Products</Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem asChild className="sm:hidden">
+                           <Link href="/admin/workers"><Users className="mr-2 h-4 w-4" /> Workers</Link>
+                        </DropdownMenuItem>
+                        </>
+                    )}
+                    {userRole === 'worker' && (
+                         <DropdownMenuItem asChild className="sm:hidden">
+                           <Link href="/delivery/dashboard"><Truck className="mr-2 h-4 w-4" /> Delivery Panel</Link>
+                        </DropdownMenuItem>
+                    )}
+                     <DropdownMenuItem  className="sm:hidden">
+                        <ThemeSwitcher /> <span className="ml-2">Switch Theme</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator className="sm:hidden"/>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
-            <Button variant="default" asChild size="sm">
-              <Link href="/login" className="flex items-center">
-                 Login
+            <Button variant="ghost" asChild size="sm" className="ml-2">
+              <Link href="/login">
+                Login
               </Link>
             </Button>
           )}
         </nav>
       </div>
+      {/* Search Bar (visible on sm only, below header) */}
+      <div className="md:hidden px-4 pb-3 border-b border-border">
+        <form onSubmit={handleSearchSubmit} className="w-full">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search for products, brands..."
+              className="pl-10 w-full h-10 rounded-lg bg-background theme-blush-pink:bg-pink-50/50"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </form>
+      </div>
     </header>
   );
 }
+
+// Need to import Dropdown components for the user menu
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
