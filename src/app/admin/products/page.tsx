@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { mockProducts } from '@/lib/mock-data';
 import { PlusCircle, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
-import Image from 'next/image';
+import NextImage from 'next/image'; // Renamed to avoid conflict with ImageIcon
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminProductsPage() {
@@ -20,7 +20,7 @@ export default function AdminProductsPage() {
   const [isClient, setIsClient] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [productForm, setProductForm] = useState<Partial<Product>>({});
+  const [productForm, setProductForm] = useState<Partial<Product> & { imageUrlsInput?: string }>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,25 +30,43 @@ export default function AdminProductsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setProductForm(prev => ({ ...prev, [name]: name === 'price' || name === 'stock' ? parseFloat(value) : value }));
+    setProductForm(prev => ({ 
+        ...prev, 
+        [name]: (name === 'price' || name === 'stock' || name === 'originalPrice' || name === 'rating' || name === 'reviewCount') 
+                ? parseFloat(value) || 0 
+                : value 
+    }));
+  };
+
+  const handleImageUrlsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProductForm(prev => ({ ...prev, imageUrlsInput: e.target.value }));
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const imageUrlsArray = productForm.imageUrlsInput?.split(',').map(url => url.trim()).filter(url => url) || [];
+    
     if (editingProduct) {
-      // Update product
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...editingProduct, ...productForm } as Product : p));
+      setProducts(prev => prev.map(p => p.id === editingProduct.id ? { 
+          ...editingProduct, 
+          ...productForm, 
+          imageUrls: imageUrlsArray.length > 0 ? imageUrlsArray : editingProduct.imageUrls
+      } as Product : p));
       toast({ title: "Product Updated", description: `${productForm.name || editingProduct.name} updated successfully.` });
     } else {
-      // Add new product
       const newProduct: Product = {
-        id: String(Date.now()), // Simple ID generation
+        id: String(Date.now()),
         name: productForm.name || 'New Product',
         description: productForm.description || '',
         price: productForm.price || 0,
-        imageUrl: productForm.imageUrl || 'https://placehold.co/600x400.png',
+        imageUrls: imageUrlsArray.length > 0 ? imageUrlsArray : ['https://placehold.co/600x400.png'],
         stock: productForm.stock || 0,
         category: productForm.category || 'Uncategorized',
+        brand: productForm.brand || '',
+        tag: productForm.tag || '',
+        originalPrice: productForm.originalPrice || undefined,
+        rating: productForm.rating || undefined,
+        reviewCount: productForm.reviewCount || undefined,
       };
       setProducts(prev => [newProduct, ...prev]);
       toast({ title: "Product Added", description: `${newProduct.name} added successfully.` });
@@ -60,13 +78,13 @@ export default function AdminProductsPage() {
 
   const openAddModal = () => {
     setEditingProduct(null);
-    setProductForm({});
+    setProductForm({imageUrlsInput: 'https://placehold.co/600x400.png'});
     setIsModalOpen(true);
   };
 
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
-    setProductForm(product);
+    setProductForm({...product, imageUrlsInput: product.imageUrls.join(', ')});
     setIsModalOpen(true);
   };
 
@@ -98,6 +116,7 @@ export default function AdminProductsPage() {
                 <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Brand</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
                 <TableHead className="text-center">Actions</TableHead>
@@ -108,13 +127,14 @@ export default function AdminProductsPage() {
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="relative h-12 w-12 rounded-md overflow-hidden">
-                      <Image src={product.imageUrl} alt={product.name} layout="fill" objectFit="cover" data-ai-hint={`${product.category.toLowerCase()} product small`} />
+                      <NextImage src={product.imageUrls[0]} alt={product.name} layout="fill" objectFit="cover" data-ai-hint={`${product.category.toLowerCase()} product small`} />
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.brand}</TableCell>
                   <TableCell className="text-right">NRS {product.price.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">{product.stock}</TableCell>
+                  <TableCell className="text-right" >{product.stock}</TableCell>
                   <TableCell className="text-center">
                     <Button variant="ghost" size="icon" onClick={() => openEditModal(product)} className="mr-2 hover:text-primary">
                       <Edit className="h-4 w-4" />
@@ -132,7 +152,7 @@ export default function AdminProductsPage() {
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             <DialogDescription>
@@ -150,19 +170,46 @@ export default function AdminProductsPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="category" className="text-right">Category</Label>
-              <Input id="category" name="category" value={productForm.category || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., Skincare, Makeup, Haircare" required />
+              <Input id="category" name="category" value={productForm.category || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., Skincare, Makeup" required />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="brand" className="text-right">Brand</Label>
+              <Input id="brand" name="brand" value={productForm.brand || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., Glow Beauty"/>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right">Price (NRS)</Label>
               <Input id="price" name="price" type="number" step="0.01" value={productForm.price || ''} onChange={handleInputChange} className="col-span-3" required />
             </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="originalPrice" className="text-right">Original Price</Label>
+              <Input id="originalPrice" name="originalPrice" type="number" step="0.01" value={productForm.originalPrice || ''} onChange={handleInputChange} className="col-span-3" placeholder="Optional"/>
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="stock" className="text-right">Stock</Label>
               <Input id="stock" name="stock" type="number" value={productForm.stock || ''} onChange={handleInputChange} className="col-span-3" required />
             </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="tag" className="text-right">Tag/Badge</Label>
+              <Input id="tag" name="tag" value={productForm.tag || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., New, Sale, Save NRS X"/>
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="imageUrl" className="text-right">Image URL</Label>
-              <Input id="imageUrl" name="imageUrl" value={productForm.imageUrl || ''} onChange={handleInputChange} className="col-span-3" placeholder="https://placehold.co/600x400.png" />
+              <Label htmlFor="rating" className="text-right">Rating</Label>
+              <Input id="rating" name="rating" type="number" step="0.1" max="5" min="0" value={productForm.rating || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., 4.5"/>
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reviewCount" className="text-right">Review Count</Label>
+              <Input id="reviewCount" name="reviewCount" type="number" value={productForm.reviewCount || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., 150"/>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="imageUrlsInput" className="text-right">Image URLs</Label>
+              <Input id="imageUrlsInput" name="imageUrlsInput" value={productForm.imageUrlsInput || ''} onChange={handleImageUrlsChange} className="col-span-3" placeholder="Comma-separated URLs" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right col-span-1">Image Upload</Label>
+              <div className="col-span-3">
+                <Input type="file" multiple disabled className="text-sm"/>
+                <p className="text-xs text-muted-foreground mt-1">Image upload via Supabase Storage needs to be implemented.</p>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>

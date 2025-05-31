@@ -4,7 +4,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  imageUrl: string;
+  imageUrls: string[]; // Changed from imageUrl to imageUrls
   stock: number;
   category: string;
   brand?: string;
@@ -30,29 +30,29 @@ export interface Order {
 }
 
 export interface Address {
-  fullName?: string; // Added from address page
-  phone?: string; // New field for phone number
+  fullName?: string;
+  phone?: string;
   street: string;
   city: string;
   state: string;
   zipCode: string;
   country: string;
-  apartment?: string; // Added from address page
+  apartment?: string;
 }
 
 export interface User {
   id: string;
   email: string;
-  role: 'customer' | 'admin' | 'delivery';
+  role: 'customer' | 'admin' | 'delivery'; // 'delivery' can be 'worker'
   address?: Address;
+  username?: string; // For staff login
 }
 
 export interface Category {
   id: string;
   name: string;
-  imageUrl: string;
+  imageUrl: string; // Categories can still use a single image
   link: string;
   dataAiHint: string;
-  bgColorClass?: string; // For styling category cards like in the image
+  bgColorClass?: string;
 }
-

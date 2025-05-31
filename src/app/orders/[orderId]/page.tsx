@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 const fallbackMockOrder: Order = {
   id: 'FALLBACK_ORD123',
   items: [
-    { id: '1', name: 'Radiant Glow Serum (Fallback)', description: 'Fallback item description.', price: 45.00, imageUrl: 'https://placehold.co/100x100.png', stock: 0, category: 'Skincare', quantity: 1 },
+    { id: '1', name: 'Radiant Glow Serum (Fallback)', description: 'Fallback item description.', price: 45.00, imageUrls: ['https://placehold.co/100x100.png'], stock: 0, category: 'Skincare', quantity: 1 },
   ],
   totalAmount: 45.00 + 50.00 + (45.00 * 0.1),
   status: 'Processing',
@@ -52,26 +52,22 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
         } catch (e) {
           console.error("Failed to parse order data from localStorage", e);
           setError(`Invalid order data for ID: ${params.orderId}.`);
-          // setOrder(fallbackMockOrder); // Optionally set a fallback
         }
       } else {
-         // Attempt to find in static mock history if not in localStorage (for deep links to older mock orders)
         const staticHistory = typeof window !== "undefined" ? JSON.parse(localStorage.getItem('staticMockOrderHistory') || '[]') : [];
         const historyOrder = staticHistory.find((histOrder: Order) => histOrder.id === params.orderId);
         if (historyOrder) {
           setOrder(historyOrder);
         } else {
-          setError(`Order with ID: ${params.orderId} not found.`);
-          // setOrder(fallbackMockOrder); // Optionally set a fallback
+          setError(`Order with ID: ${params.orderId} not found. This app uses mock data; persistent user-specific orders require backend integration.`);
         }
       }
     } else {
       setError("No order ID provided.");
-      // setOrder(fallbackMockOrder); // Optionally set a fallback
     }
   }, [params.orderId]);
   
-  useEffect(() => { // Save static mock history to localStorage once
+  useEffect(() => { 
     if (typeof window !== "undefined" && !localStorage.getItem('staticMockOrderHistory')) {
         const { mockOrderHistory } = require('@/lib/mock-data');
         if(mockOrderHistory) {
@@ -114,10 +110,7 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
   const progressValue = statusSteps[currentStatusIndex]?.progress ?? 0;
   const shippingCost = 50.00; 
   const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  // Tax might be part of totalAmount already, or calculated separately.
-  // For simplicity, assume totalAmount includes tax and tip if applicable.
-  // If totalAmount doesn't include tax, it should be added.
-  // const tax = subtotal * 0.1; 
+
 
   return (
     <div className="container mx-auto py-12">
@@ -148,7 +141,7 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
             <div className="space-y-4">
               {order.items.map((item: CartItemType) => (
                 <div key={item.id + item.name} className="flex items-center gap-4 p-2 border rounded-md">
-                  <Image src={item.imageUrl} alt={item.name} width={64} height={64} className="rounded-md object-cover" data-ai-hint={`${item.category.toLowerCase()} product small`}/>
+                  <Image src={item.imageUrls[0]} alt={item.name} width={64} height={64} className="rounded-md object-cover" data-ai-hint={`${item.category.toLowerCase()} product small`}/>
                   <div className="flex-grow">
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">Qty: {item.quantity} - Price: NRS {item.price.toFixed(2)}</p>
@@ -165,7 +158,9 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
             <div>
               <h3 className="text-xl font-semibold mb-2">Shipping Address</h3>
               <div className="text-sm text-muted-foreground p-3 border rounded-md bg-secondary/30">
-                <p>{order.shippingAddress.street}</p>
+                <p>{order.shippingAddress.fullName}</p>
+                {order.shippingAddress.phone && <p>{order.shippingAddress.phone}</p>}
+                <p>{order.shippingAddress.street}, {order.shippingAddress.apartment}</p>
                 <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
                 <p>{order.shippingAddress.country}</p>
               </div>
@@ -176,7 +171,8 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
                 <div className="flex justify-between"><span>Subtotal:</span> <span>NRS {subtotal.toFixed(2)}</span></div>
                 <div className="flex justify-between"><span>Shipping:</span> <span>NRS {shippingCost.toFixed(2)}</span></div>
                 {/* Tip might be implicitly included in totalAmount if saved that way, or shown explicitly */}
-                {/* <div className="flex justify-between"><span>Tax (10%):</span> <span>NRS {tax.toFixed(2)}</span></div> */}
+                {/* const tip = order.totalAmount - subtotal - shippingCost; // if tip is part of totalAmount */}
+                {/* {tip > 0 && <div className="flex justify-between"><span>Tip:</span> <span>NRS {tip.toFixed(2)}</span></div>} */}
                 <Separator className="my-1"/>
                 <div className="flex justify-between font-bold text-base"><span>Total:</span> <span className="text-primary">NRS {order.totalAmount.toFixed(2)}</span></div>
               </div>
