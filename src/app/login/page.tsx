@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { supabase, type SupabaseUser } from '@/lib/supabaseClient';
-import { Mail, LogIn, UserCircle, KeyRound, Briefcase } from 'lucide-react'; // Added Briefcase for Staff Login
+import { Mail, LogIn, UserCircle, KeyRound, Briefcase } from 'lucide-react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -31,12 +31,13 @@ export default function LoginPage() {
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const [staffUsername, setStaffUsername] = useState('');
+  const [staffEmail, setStaffEmail] = useState(''); // Changed from staffUsername
   const [staffPassword, setStaffPassword] = useState('');
   const [isLoadingStaffLogin, setIsLoadingStaffLogin] = useState(false);
 
   const n8nWebhookUrl = 'https://n8n-pgfu.onrender.com:443/webhook-test/Webhook';
   const adminEmailForRedirect = 'jhagamernp098@gmail.com';
+  const workerEmailForRedirect = 'worker@example.com'; // Example worker email
 
   useEffect(() => {
     if (!supabase) return;
@@ -46,10 +47,14 @@ export default function LoginPage() {
         if (event === 'SIGNED_IN' && session?.user) {
           toast({
             title: 'Login Successful',
-            description: `Welcome back, ${session.user.email}!`,
+            description: `Welcome, ${session.user.email}!`,
           });
+          // Redirection logic
           if (session.user.email === adminEmailForRedirect) {
             router.push('/admin/products');
+          } else if (session.user.email === workerEmailForRedirect) {
+            // This is a simplified check. Ideally, check app_metadata.role
+            router.push('/delivery/dashboard');
           } else {
             router.push('/'); 
           }
@@ -83,10 +88,10 @@ export default function LoginPage() {
     }
 
     try {
-      await fetch(n8nWebhookUrl, { /* ... n8n call as before ... */ });
+      await fetch(n8nWebhookUrl, { method: 'POST', body: JSON.stringify({ event: 'magic_link_attempt', email }), headers: { 'Content-Type': 'application/json'} });
     } catch (n8nError) {
-      console.warn('Could not reach n8n webhook:', n8nError);
-      toast({ /* ... n8n error toast as before ... */ });
+      console.warn('Could not reach n8n webhook for magic link:', n8nError);
+      toast({ title: 'Notification Service Unavailable', description: 'Could not log login attempt, but proceeding.', variant: 'default', duration: 3000 });
     }
 
     try {
@@ -97,7 +102,7 @@ export default function LoginPage() {
       if (error) throw error;
       toast({
         title: 'Check your email!',
-        description: `A magic link has been sent to ${email} by Supabase. Click the link to log in.`,
+        description: `A magic link has been sent to ${email}. Click the link to log in.`,
         duration: 9000,
       });
       setEmail('');
@@ -120,8 +125,10 @@ export default function LoginPage() {
       return;
     }
     try {
-        await fetch(n8nWebhookUrl, { /* ... n8n call for Google attempt ... */ });
-    } catch (n8nError) { /* ... */ }
+        await fetch(n8nWebhookUrl, { method: 'POST', body: JSON.stringify({ event: 'google_login_attempt' }), headers: { 'Content-Type': 'application/json'} });
+    } catch (n8nError) {
+      console.warn('Could not reach n8n webhook for Google login:', n8nError);
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -133,6 +140,7 @@ export default function LoginPage() {
       toast({ title: 'Google Login Failed', description: error.message, variant: 'destructive' });
       setIsLoadingGoogle(false); 
     }
+    // setIsLoadingGoogle(false); // Loading will be true until redirect or error
   };
 
   const handleStaffLogin = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -140,25 +148,43 @@ export default function LoginPage() {
     setIsLoadingStaffLogin(true);
     setAuthError(null);
 
-    if (!staffUsername || !staffPassword) {
-        setAuthError("Username and password are required for staff login.");
-        toast({ title: "Staff Login Failed", description: "Username and password are required.", variant: "destructive" });
+    if (!staffEmail || !staffPassword) {
+        setAuthError("Staff Email and password are required.");
+        toast({ title: "Staff Login Failed", description: "Email and password are required.", variant: "destructive" });
         setIsLoadingStaffLogin(false);
         return;
     }
 
-    // MOCK STAFF LOGIN
-    if (staffUsername.toLowerCase() === 'worker' && staffPassword === 'password123') {
-        toast({
-            title: "Staff Login Successful (Mock)",
-            description: `Welcome, ${staffUsername}! Redirecting to dashboard...`,
-        });
-        // In a real app, you would get a session from Supabase here
-        // For mock, we directly redirect
-        router.push('/delivery/dashboard');
-    } else {
-        setAuthError("Invalid staff username or password (mock).");
-        toast({ title: "Staff Login Failed (Mock)", description: "Invalid staff username or password.", variant: "destructive" });
+    if (!supabase) {
+      setAuthError("Supabase client is not initialized.");
+      toast({ title: "Login Failed", description: "Supabase client is not initialized.", variant: "destructive" });
+      setIsLoadingStaffLogin(false);
+      return;
+    }
+
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email: staffEmail,
+        password: staffPassword,
+      });
+
+      if (error) throw error;
+
+      // Successful login will trigger onAuthStateChange which handles redirection.
+      // No explicit redirection here to avoid race conditions with the auth listener.
+      toast({
+          title: "Staff Login Attempted",
+          description: `Checking credentials for ${staffEmail}...`,
+      });
+      // Clear form, or let onAuthStateChange handle it.
+      // setStaffEmail('');
+      // setStaffPassword('');
+
+    } catch (error: any) {
+      console.error('Supabase Staff Login Error:', error);
+      const errorMessage = error.message || 'Invalid email or password.';
+      setAuthError(errorMessage);
+      toast({ title: "Staff Login Failed", description: errorMessage, variant: "destructive" });
     }
     setIsLoadingStaffLogin(false);
   };
@@ -190,7 +216,7 @@ export default function LoginPage() {
                 onClick={handleGoogleLogin}
                 disabled={isLoadingGoogle || isLoadingMagicLink || isLoadingStaffLogin}
               >
-                {isLoadingGoogle ? 'Redirecting...' : <><GoogleIcon /> <span className="ml-2">Sign in with Google</span></>}
+                {isLoadingGoogle ? 'Redirecting to Google...' : <><GoogleIcon /> <span className="ml-2">Sign in with Google</span></>}
               </Button>
               <div className="relative my-2">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
@@ -216,16 +242,16 @@ export default function LoginPage() {
             </TabsContent>
             <TabsContent value="staff" className="space-y-4 pt-4">
                <CardDescription className="text-center">
-                Delivery personnel login.
+                Authorized personnel login (e.g., Delivery, Admin).
               </CardDescription>
               <form onSubmit={handleStaffLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="staffUsername" className="flex items-center mb-1">
-                    <UserCircle className="mr-2 h-4 w-4 text-muted-foreground" /> Username
+                  <Label htmlFor="staffEmail" className="flex items-center mb-1">
+                    <UserCircle className="mr-2 h-4 w-4 text-muted-foreground" /> Staff Email
                   </Label>
                   <Input
-                    id="staffUsername" type="text" placeholder="worker_username" value={staffUsername}
-                    onChange={(e) => setStaffUsername(e.target.value)} required
+                    id="staffEmail" type="email" placeholder="staff.member@example.com" value={staffEmail}
+                    onChange={(e) => setStaffEmail(e.target.value)} required
                     disabled={isLoadingStaffLogin || isLoadingGoogle || isLoadingMagicLink}
                   />
                 </div>
@@ -239,8 +265,8 @@ export default function LoginPage() {
                     disabled={isLoadingStaffLogin || isLoadingGoogle || isLoadingMagicLink}
                   />
                 </div>
-                <Button type="submit" className="w-full btn-primary-gradient" disabled={isLoadingStaffLogin || isLoadingGoogle || isLoadingMagicLink || !staffUsername || !staffPassword}>
-                  {isLoadingStaffLogin ? 'Logging In...' : 'Staff Login (Mock)'}
+                <Button type="submit" className="w-full btn-primary-gradient" disabled={isLoadingStaffLogin || isLoadingGoogle || isLoadingMagicLink || !staffEmail || !staffPassword}>
+                  {isLoadingStaffLogin ? 'Logging In...' : 'Staff Login'}
                 </Button>
               </form>
             </TabsContent>
@@ -249,7 +275,7 @@ export default function LoginPage() {
         </CardContent>
          <CardFooter className="flex-col items-center space-y-2">
            <p className="text-xs text-muted-foreground px-6 text-center">
-            Customer login uses secure magic links or Google Sign-In. Staff login is for authorized personnel.
+            Customer login uses secure magic links or Google Sign-In. Staff login is for authorized personnel only.
           </p>
         </CardFooter>
       </Card>
