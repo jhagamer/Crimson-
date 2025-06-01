@@ -12,8 +12,13 @@ import { mockProducts } from '@/lib/mock-data';
 import type { Product } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { useParams } from 'next/navigation'; // Added
+import { Input } from '@/components/ui/input'; // For the placeholder file input
 
-export default function ProductDetailPage({ params }: { params: { productId: string } }) {
+export default function ProductDetailPage() { // Removed params from props
+  const params = useParams<{ productId: string }>(); // Use hook
+  const productId = params.productId; // Extract productId
+
   const [product, setProduct] = useState<Product | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -21,10 +26,12 @@ export default function ProductDetailPage({ params }: { params: { productId: str
 
   useEffect(() => {
     setIsClient(true);
-    const foundProduct = mockProducts.find(p => p.id === params.productId);
-    setProduct(foundProduct || null);
-    setSelectedImageIndex(0); // Reset to first image when product changes
-  }, [params.productId]);
+    if (productId) { // Use extracted productId
+      const foundProduct = mockProducts.find(p => p.id === productId);
+      setProduct(foundProduct || null);
+      setSelectedImageIndex(0); // Reset to first image when product changes
+    }
+  }, [productId]); // Depend on extracted productId
 
   const handleAddToCart = () => {
     if (!product) return;
