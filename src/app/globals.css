@@ -243,4 +243,12 @@ body {
   .promo-banner-gradient {
     @apply bg-gradient-to-br from-[hsl(var(--gradient-banner-start))] to-[hsl(var(--gradient-banner-end))];
   }
+
+  /* Added shadow for bottom navigation bar */
+  .shadow-top-sm {
+    box-shadow: 0 -2px 4px -1px rgb(0 0 0 / 0.06), 0 -4px 5px -2px rgb(0 0 0 / 0.1);
+  }
+  .dark .shadow-top-sm {
+     box-shadow: 0 -2px 4px -1px rgb(255 255 255 / 0.06), 0 -4px 5px -2px rgb(255 255 255 / 0.04);
+  }
 }

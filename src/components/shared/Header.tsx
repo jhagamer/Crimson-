@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Package, LogOut, Settings, Truck, Users, Search, Menu, Bell, Heart } from 'lucide-react';
+import { ShoppingCart, User, Package, LogOut, Settings, Truck, Users, Search, Menu, Bell, Heart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,17 +13,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import ThemeSwitcher from './ThemeSwitcher';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { useSearchVisibility } from '@/contexts/SearchContext'; // Import context hook
+import { cn } from '@/lib/utils';
 
 
 export default function Header() {
   const { currentUser, loading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const { isSearchVisible, setIsSearchVisible, toggleSearch } = useSearchVisibility(); // Use context
 
-  const isAdmin = currentUser?.email === 'admin@example.com' || 
-                  currentUser?.email === 'shopcrimsonhouse@gmail.com' ||
-                  currentUser?.email === 'jhagamernp098@gmail.com';
-  const isWorker = currentUser?.email === 'worker@example.com';
+  // Admin emails - consider moving to a config or env variable
+  const adminEmails = ['jhagamernp098@gmail.com', 'admin@example.com', 'shopcrimsonhouse@gmail.com'];
+  const isAdmin = currentUser?.email && adminEmails.includes(currentUser.email);
+  const isWorker = currentUser?.email === 'worker@example.com'; // Example, update as needed
 
   let userRole: 'admin' | 'worker' | 'customer' | null = null;
   if (currentUser) {
@@ -71,6 +74,7 @@ export default function Header() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       localStorage.removeItem('lastPlacedOrderId');
+      setIsSearchVisible(false); // Hide search on logout
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
@@ -94,30 +98,39 @@ export default function Header() {
     event.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // Optionally hide search after submit: setIsSearchVisible(false);
     }
   };
 
-  // Placeholder for hamburger menu functionality
-  const handleMenuToggle = () => {
-    console.log("Hamburger menu toggled");
-    toast({title: "Menu", description: "Mobile menu would open here."});
+  const handleAdminMenuToggle = () => {
+    // Placeholder for admin menu functionality
+    // This could toggle a dedicated admin sidebar/drawer in the future
+    toast({title: "Admin Menu", description: "Admin-specific menu/sidebar would open here."});
   }
 
   return (
     <header className="bg-card border-b border-border shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Left Section: Hamburger and Title */}
+        {/* Left Section: Admin Menu (conditional) & Title */}
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" onClick={handleMenuToggle} aria-label="Open menu">
-            <Menu className="h-6 w-6" />
+          {isAdmin && (
+            <Button variant="ghost" size="icon" onClick={handleAdminMenuToggle} aria-label="Open admin menu" className="md:hidden">
+              <Menu className="h-6 w-6" />
+            </Button>
+          )}
+           <Button variant="ghost" size="icon" onClick={toggleSearch} aria-label="Toggle search" className="md:hidden">
+            <Search className="h-6 w-6" />
           </Button>
           <Link href="/" className="text-xl font-bold text-primary hover:text-primary/80 transition-colors">
             BeautyHub
           </Link>
         </div>
 
-        {/* Center Section: Search Bar (visible on md and up) */}
-        <div className="hidden md:flex flex-grow max-w-md mx-4">
+        {/* Center Section: Search Bar (conditionally visible on md and up) */}
+        <div className={cn(
+          "hidden md:flex flex-grow max-w-md mx-4",
+          {'md:hidden': !isSearchVisible && typeof window !== 'undefined' && window.innerWidth >= 768} // Hide on md+ if not toggled
+        )}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -127,27 +140,31 @@ export default function Header() {
                 className="pl-10 w-full h-10 rounded-lg bg-background theme-blush-pink:bg-pink-50/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus={isSearchVisible} // Autofocus when shown
               />
             </div>
           </form>
         </div>
+         {!isAdmin && <div className="hidden md:flex flex-grow max-w-md mx-4"></div>} {/* Placeholder for centering for non-admins */}
+
 
         {/* Right Section: Icons and Auth */}
-        <nav className="flex items-center space-x-2">
+        <nav className="flex items-center space-x-1 sm:space-x-2">
           <ThemeSwitcher />
-          <Button variant="ghost" size="icon" asChild className="relative">
+          <Button variant="ghost" size="icon" asChild className="relative hidden sm:inline-flex">
             <Link href="#" aria-label="Notifications">
               <Bell className="h-5 w-5" />
               <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full">1</Badge>
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild className="relative">
+          <Button variant="ghost" size="icon" asChild className="relative hidden sm:inline-flex">
             <Link href="#" aria-label="Wishlist">
               <Heart className="h-5 w-5" />
-               {/* <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full">3</Badge> */}
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild className="relative">
+          
+          {/* Cart icon is moved to BottomNavigationBar for mobile, kept here for larger screens */}
+          <Button variant="ghost" size="icon" asChild className="relative hidden sm:inline-flex">
             <Link href="/cart" aria-label="Shopping Cart">
               <ShoppingCart className="h-5 w-5" />
               <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full">2</Badge>
@@ -159,87 +176,55 @@ export default function Header() {
               <User className="h-6 w-6 animate-pulse" />
             </Button>
           ) : currentUser ? (
-            <>
-            {/* Hidden on small screens where it might be in a drawer menu */}
-             <div className="hidden sm:flex items-center space-x-1">
-                <Button variant="ghost" asChild size="sm">
-                <Link href={ordersLinkHref} className="flex items-center text-foreground hover:text-primary transition-colors">
-                    <Package className="mr-1 h-5 w-5" /> {ordersLinkText}
-                </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                   <Avatar className="h-8 w-8">
+                      <AvatarImage src={currentUser.user_metadata?.avatar_url || `https://placehold.co/40x40.png/E0C0E0/333333?text=${getInitials(currentUser.email)}`} alt={currentUser.email || 'User'} />
+                      <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
+                  </Avatar>
                 </Button>
-                {userRole === 'admin' && (
-                    <>
-                    <Button variant="ghost" asChild size="sm">
-                        <Link href="/admin/products" className="flex items-center text-foreground hover:text-primary transition-colors">
-                        <Settings className="mr-1 h-5 w-5" /> Products
-                        </Link>
-                    </Button>
-                    <Button variant="ghost" asChild size="sm">
-                        <Link href="/admin/workers" className="flex items-center text-foreground hover:text-primary transition-colors">
-                        <Users className="mr-1 h-5 w-5" /> Workers
-                        </Link>
-                    </Button>
-                    </>
-                )}
-                {userRole === 'worker' && (
-                    <Button variant="ghost" asChild size="sm">
-                    <Link href="/delivery/dashboard" className="flex items-center text-foreground hover:text-primary transition-colors">
-                        <Truck className="mr-1 h-5 w-5" /> Delivery
-                    </Link>
-                    </Button>
-                )}
-             </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                     <Avatar className="h-8 w-8">
-                        <AvatarImage src={currentUser.user_metadata?.avatar_url || `https://placehold.co/40x40.png/E0C0E0/333333?text=${getInitials(currentUser.email)}`} alt={currentUser.email || 'User'} />
-                        <AvatarFallback>{getInitials(currentUser.email)}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{currentUser.email}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild className="sm:hidden">
-                        <Link href={ordersLinkHref}><Package className="mr-2 h-4 w-4" />{ordersLinkText}</Link>
-                    </DropdownMenuItem>
-                    {userRole === 'admin' && (
-                        <>
-                        <DropdownMenuItem asChild className="sm:hidden">
-                           <Link href="/admin/products"><Settings className="mr-2 h-4 w-4" /> Products</Link>
-                        </DropdownMenuItem>
-                         <DropdownMenuItem asChild className="sm:hidden">
-                           <Link href="/admin/workers"><Users className="mr-2 h-4 w-4" /> Workers</Link>
-                        </DropdownMenuItem>
-                        </>
-                    )}
-                    {userRole === 'worker' && (
-                         <DropdownMenuItem asChild className="sm:hidden">
-                           <Link href="/delivery/dashboard"><Truck className="mr-2 h-4 w-4" /> Delivery Panel</Link>
-                        </DropdownMenuItem>
-                    )}
-                     <DropdownMenuItem  className="sm:hidden">
-                        <ThemeSwitcher /> <span className="ml-2">Switch Theme</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator className="sm:hidden"/>
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{currentUser.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User'}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                      <Link href={ordersLinkHref}><Package className="mr-2 h-4 w-4" />{ordersLinkText}</Link>
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
+                  {userRole === 'admin' && (
+                      <>
+                      <DropdownMenuItem asChild>
+                         <Link href="/admin/products"><Settings className="mr-2 h-4 w-4" /> Products</Link>
+                      </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link href="/admin/workers"><Users className="mr-2 h-4 w-4" /> Workers</Link>
+                      </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                         <Link href="/admin/incoming-orders"><Package className="mr-2 h-4 w-4" /> Incoming Orders</Link>
+                      </DropdownMenuItem>
+                      </>
+                  )}
+                  {userRole === 'worker' && (
+                       <DropdownMenuItem asChild>
+                         <Link href="/delivery/dashboard"><Truck className="mr-2 h-4 w-4" /> Delivery Panel</Link>
+                      </DropdownMenuItem>
+                  )}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button variant="ghost" asChild size="sm" className="ml-2">
               <Link href="/login">
@@ -249,26 +234,37 @@ export default function Header() {
           )}
         </nav>
       </div>
-      {/* Search Bar (visible on sm only, below header) */}
-      <div className="md:hidden px-4 pb-3 border-b border-border">
-        <form onSubmit={handleSearchSubmit} className="w-full">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search for products, brands..."
-              className="pl-10 w-full h-10 rounded-lg bg-background theme-blush-pink:bg-pink-50/50"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
-      </div>
+      {/* Search Bar (conditionally visible on mobile, below header) */}
+      {isSearchVisible && (
+        <div className="md:hidden px-4 pb-3 border-b border-border">
+          <form onSubmit={handleSearchSubmit} className="w-full">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search for products, brands..."
+                className="pl-10 w-full h-10 rounded-lg bg-background theme-blush-pink:bg-pink-50/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+               <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+                  onClick={() => setIsSearchVisible(false)}
+                >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </header>
   );
 }
 
-// Need to import Dropdown components for the user menu
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -278,4 +274,3 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
