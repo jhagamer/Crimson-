@@ -6,26 +6,47 @@ import type { Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { mockProducts } from '@/lib/mock-data';
-import { PlusCircle, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
-import NextImage from 'next/image'; // Renamed to avoid conflict with ImageIcon
+// import { mockProducts } from '@/lib/mock-data'; // Will fetch from Supabase
+import { PlusCircle, Edit, Trash2, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import NextImage from 'next/image'; 
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productForm, setProductForm] = useState<Partial<Product> & { imageUrlsInput?: string }>({});
   const { toast } = useToast();
 
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    setError(null);
+    if (!supabase) {
+      setError("Supabase client is not available.");
+      setIsLoading(false);
+      return;
+    }
+    const { data, error: fetchError } = await supabase.from('products').select('*').order('name', { ascending: true });
+    if (fetchError) {
+      console.error("Error fetching products:", fetchError);
+      setError(`Failed to load products: ${fetchError.message}`);
+      setProducts([]);
+    } else {
+      setProducts(data || []);
+    }
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    setIsClient(true);
-    setProducts(mockProducts);
+    fetchProducts();
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -33,7 +54,7 @@ export default function AdminProductsPage() {
     setProductForm(prev => ({ 
         ...prev, 
         [name]: (name === 'price' || name === 'stock' || name === 'originalPrice' || name === 'rating' || name === 'reviewCount') 
-                ? parseFloat(value) || 0 
+                ? parseFloat(value) || (name === 'rating' || name === 'reviewCount' ? undefined : 0) // Handle undefined for optional numbers
                 : value 
     }));
   };
@@ -42,34 +63,52 @@ export default function AdminProductsPage() {
     setProductForm(prev => ({ ...prev, imageUrlsInput: e.target.value }));
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) {
+      toast({ title: "Error", description: "Supabase client not available.", variant: "destructive" });
+      return;
+    }
+
     const imageUrlsArray = productForm.imageUrlsInput?.split(',').map(url => url.trim()).filter(url => url) || [];
+    const productDataToSave = {
+      name: productForm.name || 'Unnamed Product',
+      description: productForm.description || '',
+      price: productForm.price || 0,
+      imageUrls: imageUrlsArray.length > 0 ? imageUrlsArray : ['https://placehold.co/600x400.png'],
+      stock: productForm.stock || 0,
+      category: productForm.category || 'Uncategorized',
+      brand: productForm.brand || undefined,
+      tag: productForm.tag || undefined,
+      originalPrice: productForm.originalPrice || undefined,
+      rating: productForm.rating || undefined,
+      reviewCount: productForm.reviewCount || undefined,
+    };
     
     if (editingProduct) {
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? { 
-          ...editingProduct, 
-          ...productForm, 
-          imageUrls: imageUrlsArray.length > 0 ? imageUrlsArray : editingProduct.imageUrls
-      } as Product : p));
-      toast({ title: "Product Updated", description: `${productForm.name || editingProduct.name} updated successfully.` });
+      const { data, error: updateError } = await supabase
+        .from('products')
+        .update({ ...productDataToSave, id: editingProduct.id }) // Ensure id is part of update if needed, or omit
+        .eq('id', editingProduct.id);
+
+      if (updateError) {
+        toast({ title: "Update Failed", description: updateError.message, variant: "destructive" });
+      } else {
+        toast({ title: "Product Updated", description: `${productDataToSave.name} updated successfully.` });
+        fetchProducts(); // Re-fetch to update list
+      }
     } else {
-      const newProduct: Product = {
-        id: String(Date.now()),
-        name: productForm.name || 'New Product',
-        description: productForm.description || '',
-        price: productForm.price || 0,
-        imageUrls: imageUrlsArray.length > 0 ? imageUrlsArray : ['https://placehold.co/600x400.png'],
-        stock: productForm.stock || 0,
-        category: productForm.category || 'Uncategorized',
-        brand: productForm.brand || '',
-        tag: productForm.tag || '',
-        originalPrice: productForm.originalPrice || undefined,
-        rating: productForm.rating || undefined,
-        reviewCount: productForm.reviewCount || undefined,
-      };
-      setProducts(prev => [newProduct, ...prev]);
-      toast({ title: "Product Added", description: `${newProduct.name} added successfully.` });
+      // For new products, Supabase typically generates the ID if it's a primary key
+      const { data, error: insertError } = await supabase
+        .from('products')
+        .insert([productDataToSave]);
+      
+      if (insertError) {
+        toast({ title: "Add Failed", description: insertError.message, variant: "destructive" });
+      } else {
+        toast({ title: "Product Added", description: `${productDataToSave.name} added successfully.` });
+        fetchProducts(); // Re-fetch to update list
+      }
     }
     setIsModalOpen(false);
     setEditingProduct(null);
@@ -78,7 +117,7 @@ export default function AdminProductsPage() {
 
   const openAddModal = () => {
     setEditingProduct(null);
-    setProductForm({imageUrlsInput: 'https://placehold.co/600x400.png'});
+    setProductForm({imageUrlsInput: 'https://placehold.co/600x400.png', name: '', description: '', price: 0, stock: 0, category: ''});
     setIsModalOpen(true);
   };
 
@@ -88,14 +127,64 @@ export default function AdminProductsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    toast({ title: "Product Deleted", description: "Product removed successfully.", variant: "destructive" });
+  const handleDeleteProduct = async (productId: string) => {
+    if (!supabase) {
+      toast({ title: "Error", description: "Supabase client not available.", variant: "destructive" });
+      return;
+    }
+    const { error: deleteError } = await supabase.from('products').delete().eq('id', productId);
+    if (deleteError) {
+      toast({ title: "Delete Failed", description: deleteError.message, variant: "destructive" });
+    } else {
+      toast({ title: "Product Deleted", description: "Product removed successfully." });
+      fetchProducts(); // Re-fetch products
+    }
   };
 
-  if (!isClient) {
-    return <div className="text-center py-10">Loading admin product management...</div>;
+  if (isLoading && products.length === 0) { // Show skeletons only on initial load
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <Skeleton className="h-8 w-64 mb-2" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </CardHeader>
+          <CardContent>
+            {[...Array(3)].map((_, i) => (
+              <TableRow key={i} className="border-b-0">
+                <TableCell className="w-[80px]"><Skeleton className="h-12 w-12 rounded-md" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto" /></TableCell>
+                <TableCell className="text-center space-x-2">
+                  <Skeleton className="h-8 w-8 inline-block" /> <Skeleton className="h-8 w-8 inline-block" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <Card className="shadow-xl p-8 inline-block">
+          <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
+          <CardTitle className="text-2xl text-destructive mb-2">Error Loading Products</CardTitle>
+          <CardDescription>{error}</CardDescription>
+          <Button onClick={fetchProducts} className="mt-6">Try Again</Button>
+        </Card>
+      </div>
+    );
+  }
+
 
   return (
     <div className="container mx-auto py-8">
@@ -103,7 +192,7 @@ export default function AdminProductsPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-3xl font-bold text-primary">Manage Products</CardTitle>
-            <CardDescription>Add, edit, or delete cosmetic products in your store.</CardDescription>
+            <CardDescription>Add, edit, or delete cosmetic products in your store. (Connected to Supabase)</CardDescription>
           </div>
           <Button onClick={openAddModal}>
             <PlusCircle className="mr-2 h-5 w-5" /> Add Product
@@ -126,8 +215,8 @@ export default function AdminProductsPage() {
               {products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
-                    <div className="relative h-12 w-12 rounded-md overflow-hidden">
-                      <NextImage src={product.imageUrls[0]} alt={product.name} layout="fill" objectFit="cover" data-ai-hint={`${product.category.toLowerCase()} product small`} />
+                    <div className="relative h-12 w-12 rounded-md overflow-hidden bg-secondary/20"> {/* Added background for letterboxing */}
+                      <NextImage src={product.imageUrls[0]} alt={product.name} layout="fill" objectFit="contain" data-ai-hint={`${product.category.toLowerCase()} product small`} /> {/* Changed to contain */}
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
@@ -147,7 +236,7 @@ export default function AdminProductsPage() {
               ))}
             </TableBody>
           </Table>
-          {products.length === 0 && <p className="text-center text-muted-foreground py-8">No products yet. Add your first cosmetic product!</p>}
+          {products.length === 0 && !isLoading && <p className="text-center text-muted-foreground py-8">No products found in the database. Add your first cosmetic product!</p>}
         </CardContent>
       </Card>
 
@@ -178,15 +267,15 @@ export default function AdminProductsPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right">Price (NRS)</Label>
-              <Input id="price" name="price" type="number" step="0.01" value={productForm.price || ''} onChange={handleInputChange} className="col-span-3" required />
+              <Input id="price" name="price" type="number" step="0.01" value={productForm.price === undefined ? '' : productForm.price} onChange={handleInputChange} className="col-span-3" required />
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="originalPrice" className="text-right">Original Price</Label>
-              <Input id="originalPrice" name="originalPrice" type="number" step="0.01" value={productForm.originalPrice || ''} onChange={handleInputChange} className="col-span-3" placeholder="Optional"/>
+              <Input id="originalPrice" name="originalPrice" type="number" step="0.01" value={productForm.originalPrice === undefined ? '' : productForm.originalPrice} onChange={handleInputChange} className="col-span-3" placeholder="Optional"/>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="stock" className="text-right">Stock</Label>
-              <Input id="stock" name="stock" type="number" value={productForm.stock || ''} onChange={handleInputChange} className="col-span-3" required />
+              <Input id="stock" name="stock" type="number" value={productForm.stock === undefined ? '' : productForm.stock} onChange={handleInputChange} className="col-span-3" required />
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="tag" className="text-right">Tag/Badge</Label>
@@ -194,11 +283,11 @@ export default function AdminProductsPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="rating" className="text-right">Rating</Label>
-              <Input id="rating" name="rating" type="number" step="0.1" max="5" min="0" value={productForm.rating || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., 4.5"/>
+              <Input id="rating" name="rating" type="number" step="0.1" max="5" min="0" value={productForm.rating === undefined ? '' : productForm.rating} onChange={handleInputChange} className="col-span-3" placeholder="e.g., 4.5"/>
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="reviewCount" className="text-right">Review Count</Label>
-              <Input id="reviewCount" name="reviewCount" type="number" value={productForm.reviewCount || ''} onChange={handleInputChange} className="col-span-3" placeholder="e.g., 150"/>
+              <Input id="reviewCount" name="reviewCount" type="number" value={productForm.reviewCount === undefined ? '' : productForm.reviewCount} onChange={handleInputChange} className="col-span-3" placeholder="e.g., 150"/>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="imageUrlsInput" className="text-right">Image URLs</Label>
@@ -208,7 +297,7 @@ export default function AdminProductsPage() {
               <Label className="text-right col-span-1">Image Upload</Label>
               <div className="col-span-3">
                 <Input type="file" multiple disabled className="text-sm"/>
-                <p className="text-xs text-muted-foreground mt-1">Image upload via Supabase Storage needs to be implemented.</p>
+                <p className="text-xs text-muted-foreground mt-1">Image upload via Supabase Storage needs to be implemented for product forms.</p>
               </div>
             </div>
             <DialogFooter>

@@ -12,12 +12,12 @@ import { mockProducts } from '@/lib/mock-data';
 import type { Product } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { useParams } from 'next/navigation'; // Added
-import { Input } from '@/components/ui/input'; // For the placeholder file input
+import { useParams } from 'next/navigation'; 
+import { Input } from '@/components/ui/input'; 
 
-export default function ProductDetailPage() { // Removed params from props
-  const params = useParams<{ productId: string }>(); // Use hook
-  const productId = params.productId; // Extract productId
+export default function ProductDetailPage() { 
+  const params = useParams<{ productId: string }>(); 
+  const productId = params.productId; 
 
   const [product, setProduct] = useState<Product | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -26,16 +26,15 @@ export default function ProductDetailPage() { // Removed params from props
 
   useEffect(() => {
     setIsClient(true);
-    if (productId) { // Use extracted productId
+    if (productId) { 
       const foundProduct = mockProducts.find(p => p.id === productId);
       setProduct(foundProduct || null);
-      setSelectedImageIndex(0); // Reset to first image when product changes
+      setSelectedImageIndex(0); 
     }
-  }, [productId]); // Depend on extracted productId
+  }, [productId]); 
 
   const handleAddToCart = () => {
     if (!product) return;
-    // In a real app, this would interact with a cart service/context
     console.log(`Added ${product.name} to cart`);
     toast({
       title: "Added to Cart",
@@ -69,14 +68,14 @@ export default function ProductDetailPage() { // Removed params from props
       <Card className="overflow-hidden shadow-xl">
         <div className="grid md:grid-cols-2 gap-0 md:gap-8">
           <CardHeader className="p-0 md:p-6 flex flex-col items-center">
-             <div className="aspect-square relative w-full max-w-md rounded-lg overflow-hidden mb-4">
+             <div className="aspect-square relative w-full max-w-md rounded-lg overflow-hidden mb-4 bg-secondary/20"> {/* Added background for letterboxing */}
               <Image
                 src={currentImageUrl}
                 alt={`${product.name} - image ${selectedImageIndex + 1}`}
                 layout="fill"
-                objectFit="cover"
+                objectFit="contain" // Changed from cover to contain
                 data-ai-hint={`${product.category.toLowerCase()} product large`}
-                priority // Prioritize loading of the main image
+                priority 
               />
             </div>
             {product.imageUrls.length > 1 && (
@@ -85,14 +84,14 @@ export default function ProductDetailPage() { // Removed params from props
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`w-16 h-16 relative rounded-md overflow-hidden border-2 transition-all
+                    className={`w-16 h-16 relative rounded-md overflow-hidden border-2 transition-all bg-secondary/20 
                                 ${index === selectedImageIndex ? 'border-primary ring-2 ring-primary' : 'border-transparent hover:border-muted-foreground/50'}`}
                   >
                     <Image
                       src={url}
                       alt={`${product.name} thumbnail ${index + 1}`}
                       layout="fill"
-                      objectFit="cover"
+                      objectFit="contain" // Changed from cover to contain
                       data-ai-hint={`${product.category.toLowerCase()} product thumbnail`}
                     />
                   </button>
@@ -137,7 +136,6 @@ export default function ProductDetailPage() { // Removed params from props
               {product.stock > 0 ? `${product.stock} in stock - Order soon!` : 'Currently Out of Stock'}
             </p>
             
-            {/* Placeholder for file input - actual upload requires Supabase Storage integration */}
             <div className="my-4 p-4 border border-dashed rounded-md">
                 <p className="text-sm text-muted-foreground mb-2">Upload Product Images (Admin Feature Placeholder)</p>
                 <Input type="file" multiple disabled/>
@@ -159,15 +157,14 @@ export default function ProductDetailPage() { // Removed params from props
         </div>
       </Card>
 
-      {/* Related Products Section */}
       <div className="mt-16">
         <h2 className="text-2xl font-semibold mb-6 text-center text-foreground">You Might Also Like</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {mockProducts.filter(p => p.id !== product.id).slice(0,4).map(p => (
                 <Card key={p.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                     <Link href={`/products/${p.id}`}>
-                        <div className="aspect-video relative w-full">
-                             <Image src={p.imageUrls[0]} alt={p.name} layout="fill" objectFit="cover" data-ai-hint={`${p.category.toLowerCase()} product related`}/>
+                        <div className="aspect-video relative w-full bg-secondary/20"> {/* Added background for letterboxing */}
+                             <Image src={p.imageUrls[0]} alt={p.name} layout="fill" objectFit="contain" data-ai-hint={`${p.category.toLowerCase()} product related`}/> {/* Changed from cover to contain */}
                         </div>
                         <CardContent className="p-4">
                             <h3 className="font-semibold text-md truncate">{p.name}</h3>
@@ -179,13 +176,11 @@ export default function ProductDetailPage() { // Removed params from props
         </div>
       </div>
 
-      {/* Review System Placeholder */}
       <div className="mt-16">
         <h2 className="text-2xl font-semibold mb-6 text-foreground">Customer Reviews</h2>
         <Card className="p-6 shadow-lg">
           <CardContent>
             <p className="text-muted-foreground">Review system coming soon! This will allow users to share their feedback and ratings for products.</p>
-            {/* Example of how a review might look */}
             <div className="mt-4 border-t pt-4">
                 <div className="flex items-center mb-1">
                     {[...Array(5)].map((_, i) => (

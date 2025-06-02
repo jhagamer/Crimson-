@@ -30,12 +30,12 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full rounded-xl group border-border/70">
       <Link href={`/products/${product.id}`} className="block relative">
-        <div className="aspect-square relative w-full overflow-hidden rounded-t-xl">
+        <div className="aspect-square relative w-full overflow-hidden rounded-t-xl bg-secondary/20"> {/* Added a light background for letterboxing */}
           <Image
             src={product.imageUrls[0]} // Display the first image
             alt={product.name}
             layout="fill"
-            objectFit="cover"
+            objectFit="contain" // Changed from cover to contain
             data-ai-hint={`${product.category.toLowerCase()} product`}
             className="group-hover:scale-105 transition-transform duration-300"
           />

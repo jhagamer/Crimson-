@@ -10,7 +10,7 @@ import { Trash2, Plus, Minus } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { mockProducts } from '@/lib/mock-data'; 
-import { Input } from '@/components/ui/input'; // Added for quantity input
+import { Input } from '@/components/ui/input'; 
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
@@ -65,8 +65,8 @@ export default function CartPage() {
           <div className="md:col-span-2 space-y-4">
             {cartItems.map(item => (
               <Card key={item.id} className="flex flex-col sm:flex-row items-center p-4 gap-4">
-                <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-md overflow-hidden shrink-0">
-                   <Image src={item.imageUrls[0]} alt={item.name} layout="fill" objectFit="cover" data-ai-hint={`${item.category.toLowerCase()} product small`} />
+                <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-md overflow-hidden shrink-0 bg-secondary/20"> {/* Added background for letterboxing */}
+                   <Image src={item.imageUrls[0]} alt={item.name} layout="fill" objectFit="contain" data-ai-hint={`${item.category.toLowerCase()} product small`} /> {/* Changed to contain */}
                 </div>
                 <div className="flex-grow text-center sm:text-left">
                   <h2 className="text-lg font-semibold">{item.name}</h2>

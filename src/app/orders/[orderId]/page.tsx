@@ -141,7 +141,9 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
             <div className="space-y-4">
               {order.items.map((item: CartItemType) => (
                 <div key={item.id + item.name} className="flex items-center gap-4 p-2 border rounded-md">
-                  <Image src={item.imageUrls[0]} alt={item.name} width={64} height={64} className="rounded-md object-cover" data-ai-hint={`${item.category.toLowerCase()} product small`}/>
+                  <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary/20"> {/* Added background for letterboxing */}
+                    <Image src={item.imageUrls[0]} alt={item.name} layout="fill" objectFit="contain" data-ai-hint={`${item.category.toLowerCase()} product small`}/> {/* Changed to contain */}
+                  </div>
                   <div className="flex-grow">
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">Qty: {item.quantity} - Price: NRS {item.price.toFixed(2)}</p>
