@@ -2,12 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Search, ShoppingCart, User } from 'lucide-react';
+import { Home, Search as SearchIcon, ShoppingCart, User } from 'lucide-react'; // Renamed Search to SearchIcon
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSearchVisibility } from '@/contexts/SearchContext'; // Import context hook
+import { useSearchVisibility } from '@/contexts/SearchContext'; 
 import { useAuth } from '@/hooks/useAuth';
+import ThemeSwitcher from './ThemeSwitcher'; // Import ThemeSwitcher
 
 interface NavItemProps {
   href: string;
@@ -55,20 +56,21 @@ export default function BottomNavigationBar() {
   const { toggleSearch } = useSearchVisibility();
   const { currentUser } = useAuth();
 
-  const navItems = [
-    { href: '/', icon: Home, label: 'Home' },
-    { href: '#search', icon: Search, label: 'Search', onClick: toggleSearch },
-    { href: '/cart', icon: ShoppingCart, label: 'Cart' },
-    { href: currentUser ? '/orders/history' : '/login', icon: User, label: currentUser ? 'Profile' : 'Login' }, // Dynamic label and link
-  ];
-
   return (
     <nav className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border shadow-top-sm md:hidden z-40">
       <div className="container mx-auto h-full">
         <div className="flex justify-around items-center h-full">
-          {navItems.map((item) => (
-            <NavItem key={item.label} {...item} />
-          ))}
+          <NavItem href="/" icon={Home} label="Home" />
+          <NavItem href="#search" icon={SearchIcon} label="Search" onClick={toggleSearch} />
+          
+          {/* ThemeSwitcher placed as a main interactive element */}
+          {/* The ThemeSwitcher itself is a button, so it will be interactive */}
+          <div className="flex-1 flex items-center justify-center">
+             <ThemeSwitcher />
+          </div>
+          
+          <NavItem href="/cart" icon={ShoppingCart} label="Cart" />
+          <NavItem href={currentUser ? '/orders/history' : '/login'} icon={User} label={currentUser ? 'Profile' : 'Login'} />
         </div>
       </div>
     </nav>
